@@ -1,0 +1,6 @@
+spacy
+numpy
+polars
+scipy
+chromadb
+polars
