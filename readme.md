@@ -25,7 +25,7 @@ Kind of a crazy example is a single query bar for all functionality based on que
 1. Classical ML (Most Obvious Case is that this will aid vector search and query options)
    - Document Classification (Person, Technology, etc.)
      - Added Functionality is highlighting most important tokens.
-   - Entity Recognition
+   - named Entity Recognition as a part of the processing phase
 2. Generative Language Models (GLM)
    - Question Answering
    - Wikipedia page drafting
@@ -70,3 +70,6 @@ Kind of a crazy example is a single query bar for all functionality based on que
 2. Multi-Dim Vec Clustering - https://arxiv.org/pdf/2012.08466.pdf
 3. Retreival Augmented Generation - https://arxiv.org/pdf/2005.11401v4.pdf
    - Useful for question answering
+
+
+neo4j password: x3fWJ7rTIpW79ccsk2tjTdaSPiNot9153xIu4n5EOB4
