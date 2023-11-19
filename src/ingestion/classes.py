@@ -2,6 +2,8 @@ from typing import List, Dict, Any, Optional
 import requests
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
+import json
+import requests
 
 """
 Line 13 - 50ish is for wikipedia API calls
@@ -13,8 +15,27 @@ Line 124 to end is for article and text processing classes
 
 @dataclass
 class WikipediaAPI:
-    def get_category_data(self, category): pass  # Wikimedia API Call for categories.
+    def get_category_data(self, category):   # Wikimedia API Call for categories.
+        URL = "https://en.wikipedia.org/w/api.php"
+        PARAMS = {
+            "action": "query",
+            "list": "categorymembers",
+            "cmtitle": category,
+            "cmlimit": "max",
+            "format": "json"
+        }
 
+        HEADERS = {
+            'User-Agent': 'Myles Pember (https://github.com/wmp43/wikiSearch/tree/master; wmp43@cornell.edu)'
+        }
+
+        response = requests.get(url=URL, params=PARAMS, headers=HEADERS)
+        data = response.json()
+        # pretty_json = json.dumps(data, indent=4)
+        # print(pretty_json)
+        response_list = [(category[9:], member['title'], member["pageid"], member["ns"]) for member in
+                         data['query']['categorymembers']]
+        return response_list
     def fetch_article_content(self, title):
         """
         Fetches the plain text content of a Wikipedia article by its title.
@@ -81,6 +102,8 @@ class Category:
     def process_category(self):
         # Logic to process the category
         pass
+
+
 
 class RelationalDB(ABC):
     """

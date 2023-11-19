@@ -7,13 +7,14 @@
 #     "id": "123-gha-312",
 #     "title": "bayes_theorem",
 #     "wikipedia_id": "123456", # Wiki ID is the ID that wikipedia gives us. This can be used
-#     "summary": 'bayes_theorem is the application of posterior probabilities to statistical modeling', #HF based on first chunk
-#     "url": "https://wikilinkforbayestheorem.com", # I think we can get this from the API
 #     "metadata":{
 #         "categories": ['bayesian_statistics', 'posterior_probability', 'bayes_estimation'],
 #         "mentioned_people": ['william_bayes'],
 #         "mentioned_places": ['london'],
-#         "mentioned_topics": ['bayesian_economics', 'bayesian_deep_learning']
+#         "mentioned_topics": ['bayesian_economics', 'bayesian_deep_learning'],
+#         "storage_date": dt.object,
+#         "summary": 'bayes_theorem is the application of posterior probabilities to statistical modeling', #HF based on first chunk',
+#         "url": "https://wikilinkforbayestheorem.com",
 #     }
 # }
 #

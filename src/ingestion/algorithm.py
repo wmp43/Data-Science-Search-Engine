@@ -20,8 +20,7 @@ while list_of_categories:
     category = list_of_categories.pop(1)
     if category in set_of_categories: pass
     set_of_categories.add(category)
-    api_results = WikipediaAPI.category_request(
-        category)  # Build list of tuples from cateogry search: [(category, namespace, id, title)]
+    api_results = WikipediaAPI.category_request(category)  # Build list of tuples from cateogry search: [(category, namespace, id, title)]
     # api_results = [(category, namespace, id, title), (category, namespace, id, title), (category, namespace, id, title), (category, namespace, id, title)]
 
     (category, namespace, id, title)
