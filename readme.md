@@ -70,6 +70,3 @@ Kind of a crazy example is a single query bar for all functionality based on que
 2. Multi-Dim Vec Clustering - https://arxiv.org/pdf/2012.08466.pdf
 3. Retreival Augmented Generation - https://arxiv.org/pdf/2005.11401v4.pdf
    - Useful for question answering
-
-
-neo4j password: x3fWJ7rTIpW79ccsk2tjTdaSPiNot9153xIu4n5EOB4
