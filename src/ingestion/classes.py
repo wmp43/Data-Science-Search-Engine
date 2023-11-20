@@ -1,9 +1,18 @@
+import uuid
 from typing import List, Dict, Any, Optional
+
+import numpy as np
 import requests
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
 import json
 import requests
+from nltk.stem import WordNetLemmatizer
+from nltk.corpus import stopwords
+from sentence_transformers import SentenceTransformer
+from nltk.tokenize import word_tokenize
+from xgboost import XGBClassifier
+from sklearn.decomposition import PCA
 
 """
 Line 13 - 50ish is for wikipedia API calls
@@ -15,7 +24,7 @@ Line 124 to end is for article and text processing classes
 
 @dataclass
 class WikipediaAPI:
-    def get_category_data(self, category):   # Wikimedia API Call for categories.
+    def get_category_data(self, category):  # Wikimedia API Call for categories.
         URL = "https://en.wikipedia.org/w/api.php"
         PARAMS = {
             "action": "query",
@@ -36,6 +45,7 @@ class WikipediaAPI:
         response_list = [(category[9:], member['title'], member["pageid"], member["ns"]) for member in
                          data['query']['categorymembers']]
         return response_list
+
     def fetch_article_content(self, title):
         """
         Fetches the plain text content of a Wikipedia article by its title.
@@ -88,20 +98,44 @@ class VectorDB:
         pass
 
 
-
-
 @dataclass
 class Category:
-    super_category: Optional[str] # Need to handle categories that exist within multiple super-categories
-    namespace: int
-    wiki_id: int
-    id: int
-    category: str
-    return_items: List[str] = field(default_factory=list)  # Assuming articles are stored as a list of strings
+    super_category: Optional[str]  # Need to handle categories that exist within multiple super-categories
+    id: Optional[int]
+    title: str
+    clean_title: Optional[str]
+    return_items: Optional[List[str]] = field(default_factory=list)  # Assuming articles are stored as a list of strings
 
-    def process_category(self):
-        # Logic to process the category
-        pass
+    def clean_title_method(self):
+        # Preapre the title for the clf
+        lemmatizer = WordNetLemmatizer()
+        stop_words = set(stopwords.words('english'))
+        text = self.title.replace('Category:', '').strip()
+        text = self.title.replace('-', ' ')
+        text = self.title.replace('_', ' ')
+        text = text.lower()
+        tokens = word_tokenize(text)
+        tokens = [lemmatizer.lemmatize(word) for word in tokens if word not in stop_words and word.isalpha()]
+        self.clean_title = ' '.join(tokens)
+
+    def build_title_embeddings(self):
+        model = SentenceTransformer('all-MiniLM-L6-v2')
+        embeddings = model.encode(self.clean_title, show_progress_bar=True).reshape(1, -1)
+        return embeddings
+
+
+    def predict_relevancy(self, model_path: str, embeddings) -> bool:
+        model = XGBClassifier()
+        model.load_model(model_path)
+        proba = model.predict_proba(embeddings)
+        if proba > 0.45:
+            return True
+        else:
+            return False
+
+    def build_optionals(self, returned_items):
+        self.id = uuid.uuid4()
+        self.return_items = returned_items
 
 
 
@@ -109,6 +143,7 @@ class RelationalDB(ABC):
     """
     Schema: id:int (PK) | wiki_id:int | category: str | wiki_url:str | super_categories: List[str] | sub_categories:List[str] | sub_articles: List[str]
     """
+
     @abstractmethod
     def connect(self, credentials: Dict[str, Any]):
         pass
@@ -139,6 +174,7 @@ class RelationalDB(ABC):
         """
         pass
 
+
 class LocalRelationalDB(RelationalDB):
     def connect(self, credentials: Dict[str, Any]):
         # Implement actual connection logic
@@ -158,8 +194,6 @@ class LocalRelationalDB(RelationalDB):
 
     def add_super_category(self, category_id: int, super_category: str):
         pass
-
-
 
 
 class TextProcessor(ABC):
