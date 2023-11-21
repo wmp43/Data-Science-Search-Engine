@@ -263,8 +263,7 @@ class Article:
     title: str
     id: str
     text: str
-    embedding: List[float] = field(default_factory=[0.0, 1.0, 2.0, 3.0])
-    wiki_id: int = field(default=0)
+    embedding: Optional[List[float]] = field(default_factory=[0.0])
     wiki_url: str = field(default='')
     summary: str = field(default='')
     text_processor: TextProcessor = field(default=BaseTextProcessor())
