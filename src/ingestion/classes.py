@@ -13,6 +13,7 @@ from sentence_transformers import SentenceTransformer
 from nltk.tokenize import word_tokenize
 from xgboost import XGBClassifier
 from sklearn.decomposition import PCA
+from pydantic import BaseModel
 
 """
 Line 13 - 50ish is for wikipedia API calls
@@ -24,7 +25,7 @@ Line 124 to end is for article and text processing classes
 
 @dataclass
 class WikipediaAPI:
-    def get_category_data(self, category):  # Wikimedia API Call for categories.
+    def get_category_data(self, category: str) -> List:  # Wikimedia API Call for categories.
         URL = "https://en.wikipedia.org/w/api.php"
         PARAMS = {
             "action": "query",
@@ -80,29 +81,47 @@ class WikipediaAPI:
         return normalized_title, page_id, content, wiki_url
 
 
-class VectorDB:
-    def __init__(self, client, schema):
-        self.clint = client
-        self.schema = schema
+class VectorDB(BaseModel):
+    """
+    Should look at specifics, I think going with chroma or lance or qdrant or milvus
+    Don't really know at this point
+    """
+    client: str
 
-    def connect_to_db(self, client):
-        pass
 
-    def get_by_article(self, article_id):
-        pass
+    def connect_to_db(self, client) -> bool:
+        """
 
-    def add(self, article_id, data):
-        pass
+        :param client: token, etc. or required information for secure connect to db
+        :return: bool, denotes success of connection
+        """
 
-    def update(self, article_id, data):
-        pass
+    def add(self,  article_obj: Article) -> bool:
+        """
+        Adds chunks of single article to vec db
+        :param article_obj: Sending the finished article to db
+        :return: bool, denotes success of addition
+        """
+
+    def update_category(self, json_record: json, new_category: str) -> bool:
+        """
+        :param json_record: json output from vectdb
+        :param new_category: new category to edit
+        :return: bool to denote success
+        """
+
+    def metadata_search(self, metadata: str) -> json:
+        """
+        :param metadata: ID or title to get article in order to update metadata
+        :return: json record of article searched for
+        """
 
 
 @dataclass
 class Category:
     super_category: Optional[str]  # Need to handle categories that exist within multiple super-categories
     id: Optional[int]
-    title: str
+    title: f'Category:{str}'
     clean_title: Optional[str]
     return_items: Optional[List[str]] = field(default_factory=list)  # Assuming articles are stored as a list of strings
 
@@ -263,10 +282,11 @@ class Article:
     title: str
     id: str
     text: str
-    embedding: Optional[List[float]] = field(default_factory=[0.0])
+    embedding: Optional[List[float]] = List
     wiki_url: str = field(default='')
     summary: str = field(default='')
     text_processor: TextProcessor = field(default=BaseTextProcessor())
+    meta_category: Category = field(default=Category()) # abstract class issues
 
     def process_text_pipeline(self, text, text_processor):
         # This should include a pipeline to process text

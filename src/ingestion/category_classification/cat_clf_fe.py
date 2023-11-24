@@ -1,5 +1,5 @@
 import pandas as pd
-import nltk
+#import nltk
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords
 from sentence_transformers import SentenceTransformer
@@ -12,7 +12,7 @@ import re
 
 
 DATA_PATH = ('/Users/owner/myles-personal-env/Projects/'
-             'wikiSearch/src/ingestion/category_classification/category_df_labelled.csv')
+             'wikiSearch/src/ingestion/category_classification/dataframes/category_df_labelled.csv')
 
 df = pd.read_csv(DATA_PATH)
 

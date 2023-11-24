@@ -3,37 +3,53 @@
 # Much of this algo is current garbage.
 from classes import WikipediaAPI, Category, Article, BaseTextProcessor, TextProcessor
 from collections import deque
+import uuid
 # I wish there was a dynamic way to visualize this working, like
-list_of_categories = deque([Category_OBJ1, Category_OBJ2, Category_OBJ3])
-called_categories = set()
-called_articles = set()
-BASE_WIKI_URL = 'https://en.wikipedia.org/'
+
+
+
 
 
 while list_of_categories:
+
+    CAT1, CAT2, CAT3 = Category("meta_category", uuid.uuid4(), "Statistics"), Category("meta_category", uuid.uuid4(), "Machine_Learning"), Category("meta_category", uuid.uuid4(), "Operation_research")
+    called_articles, called_categories = set(), set()
+    BASE_WIKI_URL = 'https://en.wikipedia.org/'
+    list_of_categories = deque([CAT1, CAT2, CAT3])
+    vec_db_client = VectorDB()
+
     category = list_of_categories.popleft()
     if category.title in called_categories: pass
     called_categories.add(category.title)
-    api_results = WikipediaAPI().category_request(category.title)
+    api_results = WikipediaAPI().get_category_data(category.title)
     # api_results = [(category, namespace, id, title), (category, namespace, id, title),....]
     for result in api_results: #iterate through the result categories
         if namespace == 14:  # if the result item is a category
             super_category, namespace, id, title = result[0], result[1], result[2], result[3]
-            if title in called_categories:
-                pass
+            if title in called_categories: pass # Sub category was found via multiple super categoryies,
+            # todo: relational db for category realtionships
             else:
-                category_handler = Category(super_category, title, id, result=None)
+                category_handler = Category(super_category, title, uuid.uuid4())
                 list_of_categories.append(category_handler)
         else:
             super_category, namespace, id, title = result[0], result[1], result[2], result[3]
+            # Could be a cagtegory object as first param rather than just the name.
+            # I think you would get access to the Articles's Category's Content. Article.cateogry.super_categories
             article_handler = Article(category, title, id, "", None, f'{BASE_WIKI_URL}/{title}', "", BaseTextProcessor())
             if article_handler.title in called_articles:  # if we already found this article in different category,
                 # we want to add to the category metadata of the vecdb
                 article_handler.update_categories(article_handler.category)
+                """
+                These article methods must work across chunks in the db. A lack of breadth failure would chunk the app
+                """
             else:
                 called_articles.add(article_handler.title)
                 raw_text = WikipediaAPI.get_article_data(article_handler.title)
+
                 article_handler.update_text(raw_text)
+                # article_handler.chunk_text(raw_text)
+                # Would take raw text and break it to proper embedding length
+                # this method would also remove sections we are not interested in storing
                 summary, vector_embedding = article_handler.process_text_pipeline(BaseTextProcessor())  # This pipeline is from raw to embedding
                 article_handler.update_record(summary, vector_embedding)
 

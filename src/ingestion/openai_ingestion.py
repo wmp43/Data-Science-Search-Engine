@@ -12,9 +12,7 @@ CATEGORY_TITLE = "Category:statistics"
 WIKI_SITE = "en.wikipedia.org"
 
 
-def titles_from_category(
-    category: mwclient.listing.Category, max_depth: int
-) -> set[str]:
+def titles_from_category(category: mwclient.listing.Category, max_depth: int) -> set[str]:
     """Return a set of page titles in a given Wiki category and its subcategories."""
     titles = set()
     for cm in category.members():
