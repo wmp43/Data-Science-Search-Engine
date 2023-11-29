@@ -82,10 +82,6 @@ class WikipediaAPI:
 
 
 class VectorDB(BaseModel):
-    """
-    Should look at specifics, I think going with chroma or lance or qdrant or milvus
-    Don't really know at this point
-    """
     client: str
 
 
@@ -275,7 +271,7 @@ class BaseTextProcessor(TextProcessor):
     def build_summary(self, text, hf_token, hf_endpoint):
         return text
 
-
+# todo: get the response str to upsert pipeline correct Nov 29th
 @dataclass
 class Article:
     category: str
@@ -283,7 +279,6 @@ class Article:
     id: str
     text: str
     embedding: Optional[List[float]] = List
-    wiki_url: str = field(default='')
     summary: str = field(default='')
     text_processor: TextProcessor = field(default=BaseTextProcessor())
     meta_category: Category = field(default=Category()) # abstract class issues
