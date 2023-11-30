@@ -56,11 +56,10 @@ Pat 2 to build df for clf
 """
 import uuid
 from sklearn.decomposition import PCA
-from classes import WikipediaAPI, Category
+from src.classes import WikipediaAPI, Category
 from collections import deque
 import time
 import pandas as pd
-from xgboost import XGBClassifier
 
 MODEL_PATH = ("/Users/owner/myles-personal-env/Projects/"
               "wikiSearch/src/ingestion/category_classification/category_clf.json")
