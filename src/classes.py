@@ -21,15 +21,13 @@ from sklearn.decomposition import PCA
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 import uuid
+import os
+from ingestion.api import HuggingFaceSummaryAPI
 
 """
-Line 13 - 50ish is for wikipedia API calls
-Line 50ish - 70ish is for the vector db
-Line 124 to end is for article and text processing classes
-
 """
+token, endpoint = os.getenv("hf_token"), os.getenv("hf_endpoint")
 
-text, hf_token, hf_endpoint
 
 @dataclass
 class Category:
@@ -73,19 +71,11 @@ class Category:
 
 class TextProcessor(ABC):
     @abstractmethod
-    def clean_text(self, text):
-        pass
-
-    @abstractmethod
     def stem_text(self, text):
         pass
 
     @abstractmethod
     def lemmatize_text(self, text):
-        pass
-
-    @abstractmethod
-    def tokenize_text(self, text):
         pass
 
     @abstractmethod
@@ -97,8 +87,7 @@ class TextProcessor(ABC):
         pass
 
     @abstractmethod
-    def build_summary(self, text, hf_token, hf_endpoint):
-        # Summary Building for storing in DB and return to
+    def build_summary(self, article: Article(), api: HuggingFaceSummaryAPI()) -> List[str]:
         pass
 
 
@@ -126,11 +115,18 @@ class BaseTextProcessor(TextProcessor):
         return text
 
     def build_metadata(self, text):
+        """" Build metadata for every chunk
+        :param text:
+        :return:
+        """
         return text
 
-    def build_summary(self, text, hf_token, hf_endpoint):
-        summary = hf_request(hf_token, hf_endpoint)
-        return summary
+    def build_summary(self, article: Article(), api: HuggingFaceSummaryAPI()) -> str:
+        hf_api = HuggingFaceSummaryAPI(token=hf_token, endpoint=hf_endpoint)
+        # Edits the summary at text chunk index in order to maintain the proper text to summary
+        for idx, text in enumerate(article.text):
+            article.summary[idx] = hf_api.fetch_summary(text)
+
 
 # todo: get the response str to upsert pipeline correct Nov 29th
 @dataclass
@@ -139,9 +135,9 @@ class Article:
     title: str
     id: str
     text: List[str]
+    summary: List[str]
     metadata: Optional[Dict]
     embedding: Optional[List[float]]
-    summary: str = field(default='')
     text_processor: TextProcessor = field(default=BaseTextProcessor())
 
 

@@ -8,7 +8,6 @@ from pydantic import BaseModel
 import json
 
 
-
 class WikipediaAPI(BaseModel):
     def get_category_data(self, category: str) -> List:  # Wikimedia API Call for categories.
         URL = "https://en.wikipedia.org/w/api.php"
@@ -32,53 +31,18 @@ class WikipediaAPI(BaseModel):
                          data['query']['categorymembers']]
         return response_list
 
-    def fetch_article_content(self, title):
+    def clean_text(self) -> List:
         """
-        Fetches the plain text content of a Wikipedia article by its title.
-
-        This method retrieves the content of a Wikipedia page using the Wikipedia API. It
-        extracts the plain text without any markup or HTML. Additionally, it constructs
-        the direct URL to the Wikipedia page based on the title.
-
-        :param title: The title of the Wikipedia article to fetch.
-        :return: A tuple containing:
-            - title (str): The normalized title of the article.
-            - page_id (str): The page ID of the article in Wikipedia.
-            - content (str): The plain text extract of the article content.
-            - wiki_url (str): The direct URL to the Wikipedia page.
-        """
-        URL = "https://en.wikipedia.org/w/api.php"
-        PARAMS = {
-            "action": "query",
-            "prop": "extracts",
-            "titles": title,
-            "explaintext": True,
-            "format": "json"
-        }
-
-        response = requests.get(url=URL, params=PARAMS)
-        data = response.json()
-        pages = data["query"]["pages"]
-        page_id = next(iter(pages))
-        content = pages[page_id].get("extract", "")
-        normalized_title = pages[page_id].get("title", "")
-        wiki_url = f"https://en.wikipedia.org/wiki/{title.replace(' ', '_')}"
-        return normalized_title, page_id, content, wiki_url
-
-
-    def clean_text(self):
-        """
-        :return: Cleans and chunks
+        :return: Cleans and chunks into list of tokens
         """
         pass
-
 
 
 class HuggingFaceSummaryAPI(BaseModel):
     token: str
     endpoint: str
 
-    def fetch_summary(self, text_chunk) -> str:
+    def fetch_summary(self, text_chunk: str) -> str:
         """
         :param text_chunk: Chunk of tokenized text that is going to get summarized
         :return: summary str
@@ -88,4 +52,9 @@ class HuggingFaceSummaryAPI(BaseModel):
 
         response = requests.post(self.endpoint, headers=headers, data=json.dumps(payload))
         response_json = response.json()
-        return response_json
+
+        return response_json['text']
+
+
+class OpenAIAPI(BaseModel):
+
