@@ -6,6 +6,10 @@ import requests
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 import json
+from openai import OpenAI
+import os
+
+openai_token = os.getenv("openai_token")
 
 
 class WikipediaAPI(BaseModel):
@@ -31,14 +35,34 @@ class WikipediaAPI(BaseModel):
                          data['query']['categorymembers']]
         return response_list
 
-    def clean_text(self) -> List:
+    def get_article_data(self, article_title):
         """
-        :return: Cleans and chunks into list of tokens
+        :param article_title: title of article
+        :return: returns title, id, content of article
         """
-        pass
+        URL = "https://en.wikipedia.org/w/api.php"
+        PARAMS = {
+            "action": "query",
+            "prop": "extracts",
+            "titles": article_title,
+            "explaintext": True,
+            "format": "json"
+        }
+
+        response = requests.get(url=URL, params=PARAMS)
+        data = response.json()
+        pages = data["query"]["pages"]
+        page_id = next(iter(pages))
+        content = pages[page_id].get("extract", "")
+        title = pages[page_id].get("title", "")
+        return title, page_id, content
 
 
-class HuggingFaceSummaryAPI(BaseModel):
+class HuggingFaceAPI(BaseModel):
+    """
+    Llama model deployed to HF for text cleaning and summarization
+
+    """
     token: str
     endpoint: str
 
@@ -56,5 +80,26 @@ class HuggingFaceSummaryAPI(BaseModel):
         return response_json['text']
 
 
-# class OpenAIAPI(BaseModel):
+class OpenAIAPI(BaseModel):
+    """
+    ahhh ahh ahhhhh ahhh ahhh
+    """
+    token: str
+
+    def fetch_summary(self, text_chunk):
+        client = OpenAI(
+            organization='org-FkeFbkQ4XzxxQoN5PJ9APM7D'
+        )
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a mathematical text summarizer. Summarize the following:"},
+                {"role": "user", "content": text_chunk}
+            ]
+        )
+
+        summary = response['choices'][0]['message']['content']
+        return summary
+
+
 
