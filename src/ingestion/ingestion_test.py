@@ -56,7 +56,7 @@ Pat 2 to build df for clf
 """
 import uuid
 from sklearn.decomposition import PCA
-from src.classes import WikipediaAPI, Category
+from src.base_classes import WikipediaAPI, Category
 from collections import deque
 import time
 import pandas as pd

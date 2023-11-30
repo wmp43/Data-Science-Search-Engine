@@ -56,5 +56,5 @@ class HuggingFaceSummaryAPI(BaseModel):
         return response_json['text']
 
 
-class OpenAIAPI(BaseModel):
+# class OpenAIAPI(BaseModel):
 
