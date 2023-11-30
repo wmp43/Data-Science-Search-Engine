@@ -26,6 +26,18 @@ import re
 from ingestion.api import HuggingFaceAPI, OpenAIAPI
 
 """
+vector = {
+    "embedding": [[f32], [f32], [f32]]
+    "id": [wiki_id_{idx}],
+    "title": "bayes_theorem",
+    "summary": [str,str,str],
+    "metadata":{
+        "categories": ['bayesian_statistics', 'posterior_probability', 'bayes_estimation'],
+        "mentioned_people": ['william_bayes'],
+        "mentioned_places": ['london'],
+        "mentioned_topics": ['bayesian_economics', 'bayesian_deep_learning']
+    }
+}
 """
 hf_token, hf_endpoint = os.getenv("hf_token"), os.getenv("hf_endpoint")
 oai_token, oai_endpoint = os.getenv("oai_token"), os.getenv("oai_endpoint")
@@ -78,8 +90,7 @@ class Article:
     title: str
     id: str
     text: List[str]
-    summary: List[str]
-    metadata: Optional[Dict]
+    metadata: Optional[List[Dict]]
     embedding: Optional[List[List[float]]]
     text_processor: TextProcessor = field(default=BaseTextProcessor())
 
@@ -152,6 +163,14 @@ class BaseTextProcessor(TextProcessor):
         :param article: article object containing text,
         :return: dictionary with relevant metadata
         """
+        for idx, text_chunk in enumerate(article.text):
+            dict = {'categories': [article.category], "mentioned_people": [],
+                    "mentioned_places": [], "mentioned_topics": []}
+
+            # need to search through text and find relevant mentions
+
+            article.metadata[idx] = dict
+            # For each chunk of text
 
 
 

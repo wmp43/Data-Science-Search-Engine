@@ -71,13 +71,13 @@ class HuggingFaceAPI(BaseModel):
         :param text_chunk: Chunk of tokenized text that is going to get summarized
         :return: summary str
         """
-        headers = {"Authorization": f"Bearer {self.token}", "Content-Type": "application/json"}
-        payload = {"inputs": text_chunk}
+        headers = {"Authorization": "Bearer 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","Content-Type": "application/json"}
+        payload = {"inputs": f"<<SYS>> You are a mathematical text summarizer. Summarize the following text. <</SYS>> {text_chunk}"}
 
         response = requests.post(self.endpoint, headers=headers, data=json.dumps(payload))
         response_json = response.json()
 
-        return response_json['text']
+        return response_json[0]["generated_text"]
 
 
 class OpenAIAPI(BaseModel):
