@@ -72,8 +72,8 @@ class HuggingFaceAPI(BaseModel):
         :return: summary str
         """
         hf_token = os.getenv("hf_token")
-        headers = {"Authorization": f"Bearer {hf_token}","Content-Type": "application/json"}
-        payload = {"inputs": f"<<SYS>> You are a mathematical text summarizer. Summarize the following text. <</SYS>> {text_chunk}"}
+        headers = {"Authorization": f"Bearer {hf_token}", "Content-Type": "application/json"}
+        payload = {"inputs": f"{text_chunk}"}
 
         response = requests.post(self.endpoint, headers=headers, data=json.dumps(payload))
         response_json = response.json()
