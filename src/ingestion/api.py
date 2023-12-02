@@ -8,6 +8,8 @@ from pydantic import BaseModel
 import json
 from openai import OpenAI
 import os
+import mwclient
+import mwparserfromhell
 
 openai_token = os.getenv("openai_token")
 
@@ -36,26 +38,28 @@ class WikipediaAPI(BaseModel):
         return response_list
 
     def get_article_data(self, article_title):
-        """
-        :param article_title: title of article
-        :return: returns title, id, content of article
-        """
-        URL = "https://en.wikipedia.org/w/api.php"
-        PARAMS = {
-            "action": "query",
-            "prop": "extracts",
-            "titles": article_title,
-            "explaintext": True,
-            "format": "json"
-        }
+        site = mwclient.Site('en.wikipedia.org')
+        page = site.pages[article_title]
 
-        response = requests.get(url=URL, params=PARAMS)
-        data = response.json()
-        pages = data["query"]["pages"]
-        page_id = next(iter(pages))
-        content = pages[page_id].get("extract", "")
-        title = pages[page_id].get("title", "")
-        return title, page_id, content
+        # Dictionary to store section titles and their corresponding text
+        sections = {}
+
+        if page.exists:
+            wikitext = page.text()
+            parsed = mwparserfromhell.parse(wikitext)
+
+            # Iterate over sections
+            for section in parsed.get_sections(include_lead=True, flat=True):
+                # Use section title or "Lead section" as the key
+                title = section.filter_headings()[0].title.strip() if section.filter_headings() else "Lead section"
+                # Clean up the section text
+                text = section.strip_code().strip()
+                sections[title] = text
+        else:
+            print(f"The page '{article_title}' does not exist.")
+
+        return sections
+
 
 
 class HuggingFaceAPI(BaseModel):
