@@ -142,13 +142,13 @@ class BaseTextProcessor(TextProcessor):
         cleaned_text = ' '.join(cleaned_tokens)
         return cleaned_text
 
-    def hf_clean(self, article: Article(), HFapi: HuggingFaceAPI()):
-        hf_api = HFapi(token=hf_token, endpoint=hf_endpoint)
-        # Edits the summary at text chunk index in order to maintain the proper text to summary
-        for idx, text in enumerate(article.text):
-            article.text[idx] = hf_api.fetch_summary(text)
+    # def hf_clean(self, article: Article(), HFapi: HuggingFaceAPI()):
+    #     hf_api = HFapi(token=hf_token, endpoint=hf_endpoint)
+    #     # Edits the summary at text chunk index in order to maintain the proper text to summary
+    #     for idx, text in enumerate(article.text):
+    #         article.text[idx] = hf_api.fetch_summary(text)
 
-    def fetch_embeddings(self, article: Article(),OAIapi: OpenAIAPI()):
+    def fetch_embeddings(self, article: Article(), OAIapi: OpenAIAPI()):
         """
         :param article:
         :param OAIapi:
