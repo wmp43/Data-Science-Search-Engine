@@ -136,19 +136,53 @@ class BaseTextProcessor(TextProcessor):
     [1] -> [many] -> [many cleaned] -> [[f32],[f32],[f32]]
     """
 
-    def tokenize_and_clean(self):
-        tokens = self.text.split()
-        cleaned_tokens = [token for token in tokens if not re.match(r'\\[a-zA-Z]+', token)]
-        cleaned_text = ' '.join(cleaned_tokens)
-        return cleaned_text
+    def build_section_dict(self, article: Article()) -> Dict:
+        """
+        Split on section headings
+        :return: Dictionary with section headings as keys and text as value.
 
-    # def hf_clean(self, article: Article(), HFapi: HuggingFaceAPI()):
-    #     hf_api = HFapi(token=hf_token, endpoint=hf_endpoint)
-    #     # Edits the summary at text chunk index in order to maintain the proper text to summary
-    #     for idx, text in enumerate(article.text):
-    #         article.text[idx] = hf_api.fetch_summary(text)
+        """
+        section_pattern = r'==[^=]*=='
+        subsection_pattern = r'===[^=]*==='
+        text = re.sub(subsection_pattern, '', article.text)
+        parts = re.split(section_pattern, text)
 
-    def fetch_embeddings(self, article: Article(), OAIapi: OpenAIAPI()):
+        sections = {}
+        sections["Introduction"] = parts[0].strip()
+
+        section_headers = re.findall(section_pattern, text)
+        for i, header in enumerate(section_headers):
+            clean_header = header.strip("= ").strip()
+            sections[clean_header] = parts[i + 1].strip() if i + 1 < len(parts) else ""
+
+        return sections
+
+    def remove_curly_brackets(self, section_dict):
+        """Removes the curly braces (latex) from the values in each section."""
+        cleaned_sections = {}
+
+        for section, text in section_dict.items():
+            stack = []
+            to_remove = []
+            text_list = list(text)
+
+            for i, char in enumerate(text_list):
+                if char == '{':
+                    stack.append(i)
+                elif char == '}':
+                    if stack:
+                        start = stack.pop()
+                        if not stack:
+                            to_remove.append((start, i))
+
+            for start, end in reversed(to_remove):
+                del text_list[start:end + 1]
+
+            cleaned_sections[section] = ''.join(text_list)
+
+        return cleaned_sections
+
+    def build_embeddings(self, article: Article(), OAIapi: OpenAIAPI()):
         """
         :param article:
         :param OAIapi:
