@@ -63,24 +63,7 @@ class WikipediaAPI(BaseModel):
         return title, page_id, final_text
 
 
-def remove_nested_curly_braces(text):
-    stack = []
-    to_remove = []
-    text_list = list(text)
 
-    for i, char in enumerate(text_list):
-        if char == '{':
-            stack.append(i - 1)
-        elif char == '}':
-            if stack:
-                start = stack.pop()
-                if not stack:
-                    to_remove.append((start, i))
-
-    for start, end in reversed(to_remove):
-        del text_list[start:end + 1]
-
-    return ''.join(text_list)
 
 
 class HuggingFaceAPI(BaseModel):
@@ -129,3 +112,21 @@ class OpenAIAPI(BaseModel):
 
 
 
+def remove_nested_curly_braces(text):
+    stack = []
+    to_remove = []
+    text_list = list(text)
+
+    for i, char in enumerate(text_list):
+        if char == '{':
+            stack.append(i - 1)
+        elif char == '}':
+            if stack:
+                start = stack.pop()
+                if not stack:
+                    to_remove.append((start, i))
+
+    for start, end in reversed(to_remove):
+        del text_list[start:end + 1]
+
+    return ''.join(text_list)

@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
-from src.base_classes import *
+from src.models import *
 
 
 class RelationalDB(ABC):
