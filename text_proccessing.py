@@ -22,6 +22,8 @@ article = Article(category='filler category', title=TITLE,
                   metadata={}, text_processor=processor)
 
 article = article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
+article.show_headings(processor)
 
-print(article)
-print(article.text_dict.keys())
+#print(article.text)
+# print(article.text_dict.keys(),'\n\n\n')
+#print(article.text_dict['Introduction'])

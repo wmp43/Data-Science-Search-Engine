@@ -30,29 +30,44 @@ class BaseTextProcessor(TextProcessor):
     [1] -> [many] -> [many cleaned] -> [[f32],[f32],[f32]]
     """
 
-    def build_section_dict(self, article: Article, exclude_sections: List) -> Dict:
-        """
-        Split on section headings
-        :return: Dictionary with section headings as keys and text as value.
+    def extract_headings(self, article):
+        pattern = r"^==\s*([^=]+?)\s*==$"
+        section_pattern = r'(==\s*[^=]+?\s*==)'
+        headings = re.findall(section_pattern, article.text, re.MULTILINE)
+        print("Extracting headings...")
+        for heading in headings:
+            print(heading)
+        if not headings:
+            print("No major headings found.")
 
+
+    def build_section_dict(self, article: Article, exclude_sections: List[str]) -> Dict[str, str]:
         """
-        section_pattern = r'==[^=]*=='
-        subsection_pattern = r'===[^=]*==='
-        text = re.sub(subsection_pattern, '', article.text)
+        Split on section headings and exclude specified headings.
+        :param article: Article object containing the text.
+        :param exclude_sections: List of headings to exclude.
+        :return: Dictionary with section headings as keys and text as value.
+        """
+        # Remove LaTeX-like syntax
+        text = re.sub(r'\{\{[^}]*?\}\}', '', article.text)
+
+        # Pattern for section headings
+        section_pattern = r'(==\s*[^=]+?\s*==)'
+
+        # Split the text using the section pattern, keep the delimiters to use as keys
         parts = re.split(section_pattern, text)
 
-        sections = {}
-        sections["Introduction"] = parts[0].strip()
+        # Initialize the dictionary with the introduction section
+        sections = {'Introduction': parts[0].strip()}
 
-        section_headers = re.findall(section_pattern, text)
-        for i, header in enumerate(section_headers):
-            clean_header = header.strip("= ").strip()
+        # Iterate over the parts and populate the dictionary with section headings and content
+        for i in range(1, len(parts), 2):
+            section_title = parts[i].strip("= ").strip()
 
-            if clean_header not in exclude_sections:
-                sections[clean_header] = parts[i + 1].strip() if i + 1 < len(parts) else ""
+            if section_title not in exclude_sections:
+                sections[section_title] = parts[i + 1].strip()
+
         return sections
-
-
 
     def remove_curly_brackets(self, section_dict) -> Dict:
         """Removes the curly braces (latex) from the values in each section."""

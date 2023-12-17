@@ -128,6 +128,9 @@ class Article:
     metadata: Dict[str, List[Dict[str, any]]] = field(default_factory=dict)
     text_processor: any = None
 
+    def show_headings(self, text_processor):
+        text_processor.extract_headings(self)
+        return self
 
     def process_text_pipeline(self, text_processor, exclude_section):
         # This should include a pipeline to process text
