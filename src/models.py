@@ -134,6 +134,7 @@ class Article:
         text_dict = text_processor.build_section_dict(self, exclude_section)
         clean_text_dict = text_processor.remove_curly_brackets(text_dict)
         self.text_dict = clean_text_dict
+        return self
 
 
     def update_categories(self, new_category):

@@ -24,4 +24,4 @@ article = Article(category='filler category', title=TITLE,
 article = article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
 
 print(article)
-print(article.text_dict)
+print(article.text_dict.keys())
