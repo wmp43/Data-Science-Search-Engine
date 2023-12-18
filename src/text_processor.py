@@ -3,6 +3,8 @@ from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Optional, Tuple
 from src.models import Article, Category
 import re
+import os
+import tiktoken
 import numpy as np
 
 class TextProcessor(ABC):
@@ -90,13 +92,48 @@ class BaseTextProcessor(TextProcessor):
 
         return cleaned_sections
 
-    def build_embeddings(self, article: Article):
+
+
+    def build_token_len_dict(self, article: Article):
         """
-        :param article:
-        :param OAIapi:
-        :return:
+        Idea is to tokenize and split content of articles.
+        :param article: Article object with built text_dict
+        :return: Article Object with text_dict edited in place
         """
-        return 1
+        encoding = tiktoken.get_encoding("cl100k_base")
+        len_dict = {}
+        for section, content in article.text_dict.items():
+            num_tokens = len(encoding.encode(content))
+            if num_tokens < 10: len_dict[section] = num_tokens
+            else: print(section, num_tokens)
+        return len_dict
+
+
+
+    def build_embeddings(self, article: Article, api_key, organtion_key) -> Dict:
+        """
+        In terms of memory complexity, it may be better to
+        build embeddings and metadata right before CRUD operations
+
+        Edits the text_dict in place to both chunk text and append embedding
+
+        :param article: Content of article
+        :param api_key: OAI KEY ENV
+        :param organtion_key: OAI KEY ENV
+        :return: article object
+        """
+        from openai import OpenAI
+        client = OpenAI(api_key=os.getenv('oai_api_key'),
+                        organization=os.getenv('oai_organization_key'))
+        embed_dict = {}
+        for idx, (section, content) in enumerate(article.text_dict.items()):
+            embed_dict[f'{section}_{idx}'] = content
+            response = client.embeddings.create(
+                model="text-embedding-ada-002",
+                input=content,
+                encoding_format="float"
+            )
+        return embed_dict
 
     def build_metadata(self, article: Article, section_dict:{}):
         """"

@@ -124,7 +124,7 @@ class Article:
     title: str
     id: str
     text: str
-    text_dict: Dict[str, List[Tuple[str, np.ndarray]]] = field(default_factory=dict)
+    text_dict: Dict[str, str] = field(default_factory=dict)
     metadata: Dict[str, List[Dict[str, any]]] = field(default_factory=dict)
     text_processor: any = None
 
@@ -136,8 +136,21 @@ class Article:
         # This should include a pipeline to process text
         text_dict = text_processor.build_section_dict(self, exclude_section)
         clean_text_dict = text_processor.remove_curly_brackets(text_dict)
+        for section, text in clean_text_dict.items():
+            clean_text_dict[section] = text.replace('\u2061', '')
         self.text_dict = clean_text_dict
         return self
+
+    def process_tokenization_pipeline(self, text_processor) -> Dict:
+        """
+        This method may only be invoked after the process_text_pipeline method.
+        This will return a dictionary with section headings and token lens for
+        Cost approximation and text chunking
+        :param text_processor: BaseTextProcessor Class
+        :return:
+        """
+        len_dict = text_processor.build_token_len_dict(self)
+        return len_dict
 
 
     def update_categories(self, new_category):
