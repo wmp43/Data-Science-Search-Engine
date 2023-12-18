@@ -31,9 +31,9 @@ class BaseTextProcessor(TextProcessor):
     """
 
     def extract_headings(self, article):
-        pattern = r"^==\s*([^=]+?)\s*==$"
+        normalized_text = re.sub(r'={3,}', '==', article.text)
         section_pattern = r'(==\s*[^=]+?\s*==)'
-        headings = re.findall(section_pattern, article.text, re.MULTILINE)
+        headings = re.findall(section_pattern, normalized_text, re.MULTILINE)
         print("Extracting headings...")
         for heading in headings:
             print(heading)
@@ -48,19 +48,15 @@ class BaseTextProcessor(TextProcessor):
         :param exclude_sections: List of headings to exclude.
         :return: Dictionary with section headings as keys and text as value.
         """
-        # Remove LaTeX-like syntax
+        normalized_text = re.sub(r'={3,}', '==', article.text)
+        normalized_text = re.sub(r'\{\{[^}]*?\}\}', '', normalized_text)
+
         text = re.sub(r'\{\{[^}]*?\}\}', '', article.text)
 
-        # Pattern for section headings
         section_pattern = r'(==\s*[^=]+?\s*==)'
-
-        # Split the text using the section pattern, keep the delimiters to use as keys
-        parts = re.split(section_pattern, text)
-
-        # Initialize the dictionary with the introduction section
+        parts = re.split(section_pattern, normalized_text)
         sections = {'Introduction': parts[0].strip()}
 
-        # Iterate over the parts and populate the dictionary with section headings and content
         for i in range(1, len(parts), 2):
             section_title = parts[i].strip("= ").strip()
 
