@@ -7,6 +7,7 @@ import os
 import tiktoken
 import numpy as np
 
+
 class TextProcessor(ABC):
 
     @abstractmethod
@@ -25,6 +26,19 @@ class TextProcessor(ABC):
     def build_metadata(self, article, section_dict):
         pass
 
+    @abstractmethod
+    def build_token_len_dict(self, article):
+        pass
+
+    @abstractmethod
+    def extract_headings(self, article):
+        pass
+
+    # @abstractmethod
+    # def build_section_dict(self, article):
+    #     pass
+
+
 class BaseTextProcessor(TextProcessor):
     """
     Need some way to split the returned text of tokenize and clean.
@@ -41,7 +55,6 @@ class BaseTextProcessor(TextProcessor):
             print(heading)
         if not headings:
             print("No major headings found.")
-
 
     def build_section_dict(self, article: Article, exclude_sections: List[str]) -> Dict[str, str]:
         """
@@ -92,8 +105,6 @@ class BaseTextProcessor(TextProcessor):
 
         return cleaned_sections
 
-
-
     def build_token_len_dict(self, article: Article) -> str:
         """
         Idea is to tokenize and split content of articles. And to estimate cost of the article
@@ -104,11 +115,11 @@ class BaseTextProcessor(TextProcessor):
         len_dict = {}
         for section, content in article.text_dict.items():
             num_tokens = len(encoding.encode(content))
-            if num_tokens > 10: len_dict[section] = num_tokens
-            else: print(section, num_tokens, 'insufficient_token_section')
+            if num_tokens > 10:
+                len_dict[section] = num_tokens
+            else:
+                print(section, num_tokens, 'insufficient_token_section')
         return f'Tokens in article: {sum(i for i in len_dict.values())}'
-
-
 
     def build_embeddings(self, article: Article, client):
         """ 0.0018$/Wikipedia Article
@@ -134,7 +145,7 @@ class BaseTextProcessor(TextProcessor):
             embed_dict[section] = np.ndarrary(embedding)
         return embed_dict
 
-    def build_metadata(self, article: Article, section_dict:{}):
+    def build_metadata(self, article: Article, section_dict: {}):
         """"
         :param article: article object containing text,
         :param section_dict: dictionary with sections

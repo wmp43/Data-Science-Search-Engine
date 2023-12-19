@@ -139,7 +139,7 @@ class Article:
         self.text_dict = clean_text_dict
         return self
 
-    def process_embedding_pipeline(self, text_processor, api_key, organization_key) -> Dict:
+    def process_embedding_pipeline(self, text_processor, api_key, organization_key):
         """
         This method may only be invoked after the process_text_pipeline method.
         This will return a dictionary with section headings and token lens for
@@ -154,9 +154,13 @@ class Article:
 
     def process_metadata_pipeline(self, text_processor):
         """
+        December 19th
+        This method should build a metadata object for each embedded section.
+        By extension I guess it should also support
         :param text_processor: TextProcessor object to build metadata
-        :return:
+        :return: self
         """
+
     def show_headings(self, text_processor):
         text_processor.extract_headings(self)
         return self
