@@ -94,9 +94,9 @@ class BaseTextProcessor(TextProcessor):
 
 
 
-    def build_token_len_dict(self, article: Article):
+    def build_token_len_dict(self, article: Article) -> str:
         """
-        Idea is to tokenize and split content of articles.
+        Idea is to tokenize and split content of articles. And to estimate cost of the article
         :param article: Article object with built text_dict
         :return: Article Object with text_dict edited in place
         """
@@ -104,14 +104,14 @@ class BaseTextProcessor(TextProcessor):
         len_dict = {}
         for section, content in article.text_dict.items():
             num_tokens = len(encoding.encode(content))
-            if num_tokens < 10: len_dict[section] = num_tokens
-            else: print(section, num_tokens)
-        return len_dict
+            if num_tokens > 10: len_dict[section] = num_tokens
+            else: print(section, num_tokens, 'insufficient_token_section')
+        return f'Tokens in article: {sum(i for i in len_dict.values())}'
 
 
 
-    def build_embeddings(self, article: Article, api_key, organtion_key) -> Dict:
-        """
+    def build_embeddings(self, article: Article, client):
+        """ 0.0018$/Wikipedia Article
         In terms of memory complexity, it may be better to
         build embeddings and metadata right before CRUD operations
 
@@ -123,16 +123,15 @@ class BaseTextProcessor(TextProcessor):
         :return: article object
         """
         from openai import OpenAI
-        client = OpenAI(api_key=os.getenv('oai_api_key'),
-                        organization=os.getenv('oai_organization_key'))
+
         embed_dict = {}
         for idx, (section, content) in enumerate(article.text_dict.items()):
-            embed_dict[f'{section}_{idx}'] = content
+            # Need to edit this to handle content sections longer than n tokens
             response = client.embeddings.create(
                 model="text-embedding-ada-002",
-                input=content,
-                encoding_format="float"
-            )
+                input=content, encoding_format="float")
+            embedding = response.data[0].embedding
+            embed_dict[section] = np.ndarrary(embedding)
         return embed_dict
 
     def build_metadata(self, article: Article, section_dict:{}):

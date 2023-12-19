@@ -5,6 +5,7 @@ from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from typing import List, Dict, Any, Optional, Tuple
+from openai import OpenAI
 
 """
 vector = {
@@ -124,13 +125,10 @@ class Article:
     title: str
     id: str
     text: str
-    text_dict: Dict[str, str] = field(default_factory=dict)
+    text_dict: Dict[str, str] = field(default_factory=dict)  # Text Dict and embedding Dict match on section heading.
+    embedding_dict: Dict[str, np.ndarray] = field(default_factory=dict)  # zip() should work well enough here
     metadata: Dict[str, List[Dict[str, any]]] = field(default_factory=dict)
     text_processor: any = None
-
-    def show_headings(self, text_processor):
-        text_processor.extract_headings(self)
-        return self
 
     def process_text_pipeline(self, text_processor, exclude_section):
         # This should include a pipeline to process text
@@ -141,14 +139,28 @@ class Article:
         self.text_dict = clean_text_dict
         return self
 
-    def process_tokenization_pipeline(self, text_processor) -> Dict:
+    def process_embedding_pipeline(self, text_processor, api_key, organization_key) -> Dict:
         """
         This method may only be invoked after the process_text_pipeline method.
         This will return a dictionary with section headings and token lens for
         Cost approximation and text chunking
         :param text_processor: BaseTextProcessor Class
+        :return: self
+        """
+        client = OpenAI(api_key=api_key, organization=organization_key)
+        embed_dict = text_processor.build_embeddings(self, client)
+        self.embedding_dict = embed_dict
+        return self
+
+    def process_metadata_pipeline(self, text_processor):
+        """
+        :param text_processor: TextProcessor object to build metadata
         :return:
         """
+    def show_headings(self, text_processor):
+        text_processor.extract_headings(self)
+        return self
+    def show_token_len_dict(self, text_processor) -> Dict:
         len_dict = text_processor.build_token_len_dict(self)
         return len_dict
 
