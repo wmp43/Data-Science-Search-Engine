@@ -155,6 +155,7 @@ class Article:
     def process_metadata_pipeline(self, text_processor):
         """
         December 19th
+        https://spacy.io/usage/rule-based-matching
         This method should build a metadata object for each embedded section.
         By extension I guess it should also support
         :param text_processor: TextProcessor object to build metadata
