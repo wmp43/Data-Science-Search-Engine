@@ -5,6 +5,8 @@ import os
 from config import OPENAI_API_KEY, OPENAI_ORG_KEY
 from src.text_processor import BaseTextProcessor
 from src.models import Article
+from InstructorEmbedding import INSTRUCTOR
+import torch
 from src.ingestion.api import WikipediaAPI
 
 
@@ -25,8 +27,11 @@ article = Article(category='filler category', title=TITLE,
                   metadata={}, text_processor=processor)
 
 article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
-article.process_embedding_pipeline(processor, OPENAI_API_KEY, OPENAI_ORG_KEY)
-print(article.embedding_dict)
+article.process_embedding_pipeline(processor, INSTRUCTOR('hkunlp/instructor-large'))
+print(article.embedding_dict['Introduction'])
+
+
+
 
 
 

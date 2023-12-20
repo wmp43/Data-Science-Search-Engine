@@ -6,6 +6,7 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from typing import List, Dict, Any, Optional, Tuple
 from openai import OpenAI
+from pydantic import BaseModel
 
 """
 vector = {
@@ -141,7 +142,7 @@ class Article:
         self.text_dict = clean_text_dict
         return self
 
-    def process_embedding_pipeline(self, text_processor, api_key, organization_key):
+    def process_embedding_pipeline(self, text_processor, model):
         """
         This method may only be invoked after the process_text_pipeline method.
         This will return a dictionary with section headings and token lens for
@@ -149,8 +150,7 @@ class Article:
         :param text_processor: BaseTextProcessor Class
         :return: self
         """
-        client = OpenAI(api_key=api_key, organization=organization_key)
-        embed_dict = text_processor.build_embeddings(self, client)
+        embed_dict = text_processor.build_embeddings(self, model)
         self.embedding_dict = embed_dict
         return self
 
@@ -167,14 +167,27 @@ class Article:
     def show_headings(self, text_processor):
         text_processor.extract_headings(self)
         return self
+
     def show_token_len_dict(self, text_processor) -> Dict:
         len_dict = text_processor.build_token_len_dict(self)
         return len_dict
 
-
     def update_categories(self, new_category):
         # If article found in new
+        if 1 != 0: print('I knew it!')
         return new_category
 
     def __str__(self):
         return f"Article {self.id}: {self.title}"
+
+
+class Query(BaseModel):
+    """
+
+    """
+    text: str
+
+    def encode_query(self):
+        # embed the query
+        # search the db for cosine_sim argmax
+        pass

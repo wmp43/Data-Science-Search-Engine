@@ -8,6 +8,7 @@ import tiktoken
 import numpy as np
 
 
+
 class TextProcessor(ABC):
 
     @abstractmethod
@@ -118,7 +119,7 @@ class BaseTextProcessor(TextProcessor):
                 print(section, num_tokens, 'insufficient_token_section')
         return f'Tokens in article: {sum(i for i in len_dict.values())}'
 
-    def build_embeddings(self, article: Article, client):
+    def build_embeddings(self, article: Article, model):
         """ 0.0018$/Wikipedia Article
         In terms of memory complexity, it may be better to
         build embeddings and metadata right before CRUD operations
@@ -130,17 +131,12 @@ class BaseTextProcessor(TextProcessor):
         :param organtion_key: OAI KEY ENV
         :return: article object
         """
-        from openai import OpenAI
-
+        instruction = "Represent the Statistical paragraph for retrieval:"
         embed_dict = {}
         for idx, (section, content) in enumerate(article.text_dict.items()):
             # Need to edit this to handle content sections longer than n tokens
-            response = client.embeddings.create(
-                model="text-embedding-ada-002",
-                input=content, encoding_format="float")
-            embedding = response.data[0].embedding
-            print(type(embedding))
-            embed_dict[section] = np.array(embedding)
+            embeddings = model.encode([[instruction, content]])
+            embed_dict[section] = np.array(embeddings)
         return embed_dict
 
     def build_metadata(self, article: Article, section_dict: {}):
