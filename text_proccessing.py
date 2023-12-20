@@ -23,8 +23,7 @@ article = Article(category='filler category', title=TITLE,
                   metadata={}, text_processor=processor)
 
 article = article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
-token_len = article.process_tokenization_pipeline(processor)
-print(token_len)
+#token_len = article.process_tokenization_pipeline(processor)
 example_text = article.text_dict['Introduction']
 
 

@@ -56,9 +56,10 @@ class WikipediaAPI(BaseModel):
         page_id = next(iter(pages))
         content = pages[page_id].get("extract", "")
         tokens = content.split()
-        cleaned_tokens = [token for token in tokens if not re.match(r'\\[a-zA-Z]+', token)]
+        cleaned_tokens = [token for token in tokens]
         cleaned_text = ' '.join(cleaned_tokens)
-        final_text = re.sub(r'[\n\t]+', '', cleaned_text)
+        spaceless_text = re.sub(r'[\n\t]+', '', cleaned_text)
+        final_text = re.sub(r' {2}', ' ', spaceless_text)
         title = pages[page_id].get("title", "")
         return title, page_id, final_text
 

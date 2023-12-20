@@ -64,10 +64,7 @@ class BaseTextProcessor(TextProcessor):
         :return: Dictionary with section headings as keys and text as value.
         """
         normalized_text = re.sub(r'={3,}', '==', article.text)
-        normalized_text = re.sub(r'\{\{[^}]*?\}\}', '', normalized_text)
-
-        text = re.sub(r'\{\{[^}]*?\}\}', '', article.text)
-
+        # normalized_text = re.sub(r'\{\{[^}]*?\}\}', '', normalized_text)
         section_pattern = r'(==\s*[^=]+?\s*==)'
         parts = re.split(section_pattern, normalized_text)
         sections = {'Introduction': parts[0].strip()}
