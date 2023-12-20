@@ -139,7 +139,8 @@ class BaseTextProcessor(TextProcessor):
                 model="text-embedding-ada-002",
                 input=content, encoding_format="float")
             embedding = response.data[0].embedding
-            embed_dict[section] = np.ndarrary(embedding)
+            print(type(embedding))
+            embed_dict[section] = np.array(embedding)
         return embed_dict
 
     def build_metadata(self, article: Article, section_dict: {}):

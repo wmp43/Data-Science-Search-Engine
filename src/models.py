@@ -136,10 +136,6 @@ class Article:
         # This should include a pipeline to process text
         text_dict = text_processor.build_section_dict(self, exclude_section)
         clean_text_dict = text_processor.remove_curly_brackets(text_dict)
-        l0 = [f'\n{i}\n' for i in text_dict.values()]
-        print(l0[8])
-        l1 = [f'\n{i}\n' for i in clean_text_dict.values()]
-        print(l1[8])
         for section, text in clean_text_dict.items():
             clean_text_dict[section] = text.replace('\u2061', '')
         self.text_dict = clean_text_dict

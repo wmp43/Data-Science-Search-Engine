@@ -1,6 +1,8 @@
 """
 This is a pipeline from Article instantiation to vector embedding
 """
+import os
+from config import OPENAI_API_KEY, OPENAI_ORG_KEY
 from src.text_processor import BaseTextProcessor
 from src.models import Article
 from src.ingestion.api import WikipediaAPI
@@ -22,9 +24,9 @@ article = Article(category='filler category', title=TITLE,
                   id=page_id, text=final_text, text_dict={},
                   metadata={}, text_processor=processor)
 
-article = article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
-#token_len = article.process_tokenization_pipeline(processor)
-example_text = article.text_dict['Introduction']
+article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
+article.process_embedding_pipeline(processor, OPENAI_API_KEY, OPENAI_ORG_KEY)
+print(article.embedding_dict)
 
 
 
