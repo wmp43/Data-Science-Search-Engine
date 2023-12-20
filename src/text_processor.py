@@ -81,7 +81,7 @@ class BaseTextProcessor(TextProcessor):
         return sections
 
     def remove_curly_brackets(self, section_dict) -> Dict:
-        """Removes the curly braces (latex) from the values in each section."""
+        # todo: look at outputs in dict. Still need to figure out better method
         cleaned_sections = {}
 
         for section, text in section_dict.items():
