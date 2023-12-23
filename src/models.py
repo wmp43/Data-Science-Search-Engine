@@ -136,10 +136,12 @@ class Article:
     def process_text_pipeline(self, text_processor, exclude_section):
         # This should include a pipeline to process text
         text_dict = text_processor.build_section_dict(self, exclude_section)
+        # creates dictionary with section headings and text
         clean_text_dict = text_processor.remove_curly_brackets(text_dict)
-        for section, text in clean_text_dict.items():
-            clean_text_dict[section] = text.replace('\u2061', '')
-        self.text_dict = clean_text_dict
+        #removes latex
+        chunked_text_dict = text_processor.chunk_text_dict(self, clean_text_dict)
+        # chunks the section headings for vector embeddings. We should aim for ~375 tiktoken tokens per embedding
+        self.text_dict = chunked_text_dict
         return self
 
     def process_embedding_pipeline(self, text_processor, model):
@@ -175,6 +177,7 @@ class Article:
     def update_categories(self, new_category):
         # If article found in new
         if 1 != 0: print('I knew it!')
+        # still needs implementation
         return new_category
 
     def __str__(self):
@@ -191,3 +194,5 @@ class Query(BaseModel):
         # embed the query
         # search the db for cosine_sim argmax
         pass
+
+

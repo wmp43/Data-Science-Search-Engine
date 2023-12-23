@@ -6,7 +6,8 @@ import re
 import os
 import tiktoken
 import numpy as np
-
+from langchain.text_splitter import TokenTextSplitter
+from langchain.text_splitter import CharacterTextSplitter
 
 
 class TextProcessor(ABC):
@@ -79,7 +80,6 @@ class BaseTextProcessor(TextProcessor):
         return sections
 
     def remove_curly_brackets(self, section_dict) -> Dict:
-        # todo: look at outputs in dict. Still need to figure out better method
         cleaned_sections = {}
 
         for section, text in section_dict.items():
@@ -103,6 +103,22 @@ class BaseTextProcessor(TextProcessor):
 
         return cleaned_sections
 
+    def chunk_text_dict(self, article: Article, cleaned_section_dict) -> Dict:
+        # tiktoken tokenizer
+        # Could use Langchain textSplitter
+        sectioned_dict = {}
+        text_splitter = TokenTextSplitter(chunk_size=460, chunk_overlap=10)
+        # Arbitrary chunk size and overlap. also arbitrary splitter
+        encoding = tiktoken.get_encoding("cl100k_base")
+        for key, value in cleaned_section_dict.items():
+            chunked_text = text_splitter.split_text(value)
+            for idx, chunk in enumerate(chunked_text):
+                tokens_integer = encoding.encode(chunk)
+                #print(f'Token Length: {len(tokens_integer)} at idx {idx} of {key}')
+                print(f'{key}_{idx}')
+                sectioned_dict[f'{key}_{idx}'] = chunk
+        return sectioned_dict
+
     def build_token_len_dict(self, article: Article) -> str:
         """
         Idea is to tokenize and split content of articles. And to estimate cost of the article
@@ -120,18 +136,21 @@ class BaseTextProcessor(TextProcessor):
         return f'Tokens in article: {sum(i for i in len_dict.values())}'
 
     def build_embeddings(self, article: Article, model):
-        """ 0.0018$/Wikipedia Article
+        """
         In terms of memory complexity, it may be better to
         build embeddings and metadata right before CRUD operations
-
+        I mean this is theoretically before crud operations, but I suppose in the sense
+        that would likely not want to lug around three dictionaries of information
+        Since I am lugging around three dicts, I need to immediately delete from RAM memory
+        as soon as the sotrage operation takes place.
+        https://arxiv.org/pdf/2212.09741.pdf HK NLP Instructor model
         Edits the text_dict in place to both chunk text and append embedding
 
         :param article: Content of article
-        :param api_key: OAI KEY ENV
-        :param organtion_key: OAI KEY ENV
+        :param model: the model that embedding's are being built from. NKU NLP INSTRUCTOR
         :return: article object
         """
-        instruction = "Represent the Statistical paragraph for retrieval:"
+        instruction = "Represent the technical paragraph for retrieval:"
         embed_dict = {}
         for idx, (section, content) in enumerate(article.text_dict.items()):
             # Need to edit this to handle content sections longer than n tokens

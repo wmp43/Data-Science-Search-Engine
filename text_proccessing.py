@@ -27,8 +27,9 @@ article = Article(category='filler category', title=TITLE,
                   metadata={}, text_processor=processor)
 
 article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
-article.process_embedding_pipeline(processor, INSTRUCTOR('hkunlp/instructor-large'))
-print(article.embedding_dict['Introduction'])
+#article.process_embedding_pipeline(processor, INSTRUCTOR('hkunlp/instructor-large'))
+#print(len(article.text_dict["Introduction_1"]) + len(article.text_dict["Introduction_0"]) )
+print(f'intro_0: {article.text_dict["Confidence intervals_0"]}\n Intro_1: {article.text_dict["Confidence intervals_1"]}')
 
 
 
