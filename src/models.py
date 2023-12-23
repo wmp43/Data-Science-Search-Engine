@@ -139,7 +139,7 @@ class Article:
         # creates dictionary with section headings and text
         clean_text_dict = text_processor.remove_curly_brackets(text_dict)
         #removes latex
-        chunked_text_dict = text_processor.chunk_text_dict(self, clean_text_dict)
+        chunked_text_dict = text_processor.chunk_text_dict(clean_text_dict)
         # chunks the section headings for vector embeddings. We should aim for ~375 tiktoken tokens per embedding
         self.text_dict = chunked_text_dict
         return self

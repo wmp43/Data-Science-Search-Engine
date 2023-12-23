@@ -6,8 +6,12 @@ import re
 import os
 import tiktoken
 import numpy as np
-from langchain.text_splitter import TokenTextSplitter
-from langchain.text_splitter import CharacterTextSplitter
+from langchain.text_splitter import (TokenTextSplitter,
+                                     CharacterTextSplitter,
+                                     SpacyTextSplitter)
+
+
+
 
 
 class TextProcessor(ABC):
@@ -34,6 +38,9 @@ class TextProcessor(ABC):
 
     @abstractmethod
     def extract_headings(self, article):
+        pass
+    @abstractmethod
+    def chunk_text_dict(self, section_dict):
         pass
 
     # @abstractmethod
@@ -103,21 +110,40 @@ class BaseTextProcessor(TextProcessor):
 
         return cleaned_sections
 
-    def chunk_text_dict(self, article: Article, cleaned_section_dict) -> Dict:
+    def chunk_text_dict(self, cleaned_section_dict) -> Dict:
         # tiktoken tokenizer
         # Could use Langchain textSplitter
         sectioned_dict = {}
-        text_splitter = TokenTextSplitter(chunk_size=460, chunk_overlap=10)
+
+        text_splitter = CharacterTextSplitter(chunk_size=512, chunk_overlap=12)
         # Arbitrary chunk size and overlap. also arbitrary splitter
         encoding = tiktoken.get_encoding("cl100k_base")
         for key, value in cleaned_section_dict.items():
             chunked_text = text_splitter.split_text(value)
             for idx, chunk in enumerate(chunked_text):
+
                 tokens_integer = encoding.encode(chunk)
-                #print(f'Token Length: {len(tokens_integer)} at idx {idx} of {key}')
-                print(f'{key}_{idx}')
+                print(f'key: {key}, len: {len(tokens_integer)}, chunk:{chunk[:10]}')
+                # print(f'Token Length: {len(tokens_integer)} at idx {idx} of {key}')
                 sectioned_dict[f'{key}_{idx}'] = chunk
         return sectioned_dict
+
+    # def recursive_chunk_text_dict(self, article: Article, cleaned_section_dict) -> Dict:
+    #     # tiktoken tokenizer
+    #     # Could use Langchain textSplitter
+    #     sectioned_dict = {}
+    #     text_splitter = TokenTextSplitter(chunk_size=460, chunk_overlap=10)
+    #     # Arbitrary chunk size and overlap. also arbitrary splitter
+    #     encoding = tiktoken.get_encoding("cl100k_base")
+    #     for key, value in cleaned_section_dict.items():
+    #
+    #         # split function here
+    #         for idx, chunk in enumerate(chunked_text):
+    #             tokens_integer = encoding.encode(chunk)
+    #             #print(f'Token Length: {len(tokens_integer)} at idx {idx} of {key}')
+    #             print(f'{key}_{idx}')
+    #             sectioned_dict[f'{key}_{idx}'] = chunk
+    #     return sectioned_dict
 
     def build_token_len_dict(self, article: Article) -> str:
         """
@@ -173,3 +199,13 @@ class BaseTextProcessor(TextProcessor):
             article.metadata[idx] = dict
             # For each chunk of text
         return None
+
+
+
+class TextSplitter(ABC):
+    @abstractmethod
+    def recursive_token_split(self, article, exclude_sections):
+        pass
+
+
+
