@@ -144,7 +144,7 @@ class Article:
         self.text_dict = chunked_text_dict
         return self
 
-    def process_embedding_pipeline(self, text_processor, model):
+    def process_embedding_encoding_pipeline(self, text_processor, model):
         """
         This method may only be invoked after the process_text_pipeline method.
         This will return a dictionary with section headings and token lens for

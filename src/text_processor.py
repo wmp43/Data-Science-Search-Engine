@@ -114,18 +114,21 @@ class BaseTextProcessor(TextProcessor):
         # tiktoken tokenizer
         # Could use Langchain textSplitter
         sectioned_dict = {}
+        avg_chunk_len = []
 
-        text_splitter = CharacterTextSplitter(chunk_size=512, chunk_overlap=12)
+        text_splitter = SpacyTextSplitter(chunk_size=1200, chunk_overlap=20)
         # Arbitrary chunk size and overlap. also arbitrary splitter
         encoding = tiktoken.get_encoding("cl100k_base")
         for key, value in cleaned_section_dict.items():
             chunked_text = text_splitter.split_text(value)
             for idx, chunk in enumerate(chunked_text):
-
                 tokens_integer = encoding.encode(chunk)
-                print(f'key: {key}, len: {len(tokens_integer)}, chunk:{chunk[:10]}')
+                avg_chunk_len.append(len(tokens_integer))
+                print(f'key: {key}_{idx}, len: {len(tokens_integer)}')
+
                 # print(f'Token Length: {len(tokens_integer)} at idx {idx} of {key}')
                 sectioned_dict[f'{key}_{idx}'] = chunk
+        print(f'Average Chunk Length: {np.mean(avg_chunk_len)}')
         return sectioned_dict
 
     # def recursive_chunk_text_dict(self, article: Article, cleaned_section_dict) -> Dict:
@@ -176,12 +179,14 @@ class BaseTextProcessor(TextProcessor):
         :param model: the model that embedding's are being built from. NKU NLP INSTRUCTOR
         :return: article object
         """
+        enc = tiktoken.get_encoding("cl100k_base")
         instruction = "Represent the technical paragraph for retrieval:"
         embed_dict = {}
         for idx, (section, content) in enumerate(article.text_dict.items()):
             # Need to edit this to handle content sections longer than n tokens
+            encodings = enc.encode(content)
             embeddings = model.encode([[instruction, content]])
-            embed_dict[section] = np.array(embeddings)
+            embed_dict[section] = (np.array(embeddings), encodings)
         return embed_dict
 
     def build_metadata(self, article: Article, section_dict: {}):
