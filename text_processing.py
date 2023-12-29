@@ -8,29 +8,44 @@ from src.models import Article
 from InstructorEmbedding import INSTRUCTOR
 import torch
 from src.ingestion.api import WikipediaAPI
+from spacy.lang.en import English
+from config import ner_pattern
 
 
+NER = True
+def ner(article: Article):
+    metadata_dict = {}
+    nlp = English()
+    ruler = nlp.add_pipe("entity_ruler")
+    ruler.add_patterns(ner_pattern)
+    for heading, content in article.text_dict.items():
+        doc = nlp(content)
+        print(doc)
+        # metadata_dict[heading] = content
+        # print([(ent.text, ent.label_) for ent in doc.ents])
 
-TITLE = 'Normal_distribution'
-SECTIONS_TO_IGNORE = [
-    "See also", "References", "External links", "Further reading", "Footnotes", "Bibliography", "Sources", "Citations",
-    "Literature", "Footnotes", "Notes and references", "Photo gallery", "Works cited", "Photos", "Gallery", "Notes",
-    "References and sources", "References and notes"]
+INGESTION = False
+if INGESTION:
+    TITLE = 'Normal_distribution'
+    SECTIONS_TO_IGNORE = [
+        "See also", "References", "External links", "Further reading", "Footnotes", "Bibliography", "Sources", "Citations",
+        "Literature", "Footnotes", "Notes and references", "Photo gallery", "Works cited", "Photos", "Gallery", "Notes",
+        "References and sources", "References and notes"]
 
-wiki_api = WikipediaAPI()
-processor = BaseTextProcessor()
+    wiki_api = WikipediaAPI()
+    processor = BaseTextProcessor()
 
-title, page_id, final_text = wiki_api.fetch_article_data(TITLE)
+    title, page_id, final_text = wiki_api.fetch_article_data(TITLE)
 
-article = Article(category='filler category', title=TITLE,
-                  id=page_id, text=final_text, text_dict={},
-                  metadata={}, text_processor=processor)
+    article = Article(category='filler category', title=TITLE,
+                      id=page_id, text=final_text, text_dict={},
+                      metadata={}, text_processor=processor)
 
-article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
-#article.process_embedding_pipeline(processor, INSTRUCTOR('hkunlp/instructor-large'))
-#print(len(article.text_dict["Introduction_1"]) + len(article.text_dict["Introduction_0"]) )
-# print(f'intro_0: {article.text_dict["Introduction_0"]}\n Intro_1: {article.text_dict["Introduction_1"]}')
-print(article.text_dict.keys())
+    article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
+    #article.process_embedding_pipeline(processor, INSTRUCTOR('hkunlp/instructor-large'))
+    #print(len(article.text_dict["Introduction_1"]) + len(article.text_dict["Introduction_0"]) )
+    # print(f'intro_0: {article.text_dict["Introduction_0"]}\n Intro_1: {article.text_dict["Introduction_1"]}')
+    print(article.text_dict.keys())
 
 
 

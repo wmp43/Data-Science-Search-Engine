@@ -108,7 +108,8 @@ class Category:
 
 Vector record
     vector_record = {
-        "embedding": np.ndarray
+        "embedding": np.ndarray,
+        "encoding": np.ndarray
         "id": 1234,
         "title": "title of article",
         "metadata": {"section heading":{

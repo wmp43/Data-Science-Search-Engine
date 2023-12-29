@@ -11,9 +11,6 @@ from langchain.text_splitter import (TokenTextSplitter,
                                      SpacyTextSplitter)
 
 
-
-
-
 class TextProcessor(ABC):
 
     @abstractmethod
@@ -204,13 +201,6 @@ class BaseTextProcessor(TextProcessor):
             article.metadata[idx] = dict
             # For each chunk of text
         return None
-
-
-
-class TextSplitter(ABC):
-    @abstractmethod
-    def recursive_token_split(self, article, exclude_sections):
-        pass
 
 
 
