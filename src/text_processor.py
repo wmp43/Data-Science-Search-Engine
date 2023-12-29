@@ -121,11 +121,11 @@ class BaseTextProcessor(TextProcessor):
             for idx, chunk in enumerate(chunked_text):
                 tokens_integer = encoding.encode(chunk)
                 avg_chunk_len.append(len(tokens_integer))
-                print(f'key: {key}_{idx}, len: {len(tokens_integer)}')
+                # print(f'key: {key}_{idx}, len: {len(tokens_integer)}')
 
                 # print(f'Token Length: {len(tokens_integer)} at idx {idx} of {key}')
                 sectioned_dict[f'{key}_{idx}'] = chunk
-        print(f'Average Chunk Length: {np.mean(avg_chunk_len)}')
+        # print(f'Average Chunk Length: {np.mean(avg_chunk_len)}')
         return sectioned_dict
 
     # def recursive_chunk_text_dict(self, article: Article, cleaned_section_dict) -> Dict:

@@ -9,7 +9,7 @@ from InstructorEmbedding import INSTRUCTOR
 import torch
 from src.ingestion.api import WikipediaAPI
 from spacy.lang.en import English
-from config import ner_pattern
+from config import ner_pattern, test_pattern
 
 
 NER = True
@@ -17,14 +17,14 @@ def ner(article: Article):
     metadata_dict = {}
     nlp = English()
     ruler = nlp.add_pipe("entity_ruler")
-    ruler.add_patterns(ner_pattern)
+    ruler.add_patterns(test_pattern)
     for heading, content in article.text_dict.items():
         doc = nlp(content)
-        print(doc)
+        # print(f"Heading: {heading} doc: {doc}")
         # metadata_dict[heading] = content
-        # print([(ent.text, ent.label_) for ent in doc.ents])
+        print(f"{heading} ", [(ent.text, ent.label_) for ent in doc.ents], '\n')
 
-INGESTION = False
+INGESTION = True
 if INGESTION:
     TITLE = 'Normal_distribution'
     SECTIONS_TO_IGNORE = [
@@ -41,11 +41,11 @@ if INGESTION:
                       id=page_id, text=final_text, text_dict={},
                       metadata={}, text_processor=processor)
 
-    article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
+    article1 = article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
     #article.process_embedding_pipeline(processor, INSTRUCTOR('hkunlp/instructor-large'))
     #print(len(article.text_dict["Introduction_1"]) + len(article.text_dict["Introduction_0"]) )
     # print(f'intro_0: {article.text_dict["Introduction_0"]}\n Intro_1: {article.text_dict["Introduction_1"]}')
-    print(article.text_dict.keys())
+    ner(article1)
 
 
 
