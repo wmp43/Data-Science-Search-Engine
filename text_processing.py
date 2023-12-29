@@ -10,25 +10,35 @@ import torch
 from src.ingestion.api import WikipediaAPI
 from spacy.lang.en import English
 from config import ner_pattern, test_pattern
-
+import json
 
 NER = True
-def ner(article: Article):
+
+def ner(article):
     metadata_dict = {}
     nlp = English()
     ruler = nlp.add_pipe("entity_ruler")
     ruler.add_patterns(test_pattern)
+
     for heading, content in article.text_dict.items():
+        sub_metadata_dict = {}
         doc = nlp(content)
-        # print(f"Heading: {heading} doc: {doc}")
-        # metadata_dict[heading] = content
-        print(f"{heading} ", [(ent.text, ent.label_) for ent in doc.ents], '\n')
+        for ent in doc.ents:
+            if ent.label_ in sub_metadata_dict:
+                sub_metadata_dict[ent.label_].add(ent.text)
+            else:
+                sub_metadata_dict[ent.label_] = {ent.text}
+        # Convert sets to lists for final output
+        metadata_dict[heading] = {key: list(value) for key, value in sub_metadata_dict.items()}
+    article.metadata = metadata_dict
+    return None
 
 INGESTION = True
 if INGESTION:
-    TITLE = 'Normal_distribution'
+    TITLE = 'Machine_learning'
     SECTIONS_TO_IGNORE = [
-        "See also", "References", "External links", "Further reading", "Footnotes", "Bibliography", "Sources", "Citations",
+        "See also", "References", "External links", "Further reading", "Footnotes", "Bibliography", "Sources",
+        "Citations",
         "Literature", "Footnotes", "Notes and references", "Photo gallery", "Works cited", "Photos", "Gallery", "Notes",
         "References and sources", "References and notes"]
 
@@ -42,14 +52,10 @@ if INGESTION:
                       metadata={}, text_processor=processor)
 
     article1 = article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
-    #article.process_embedding_pipeline(processor, INSTRUCTOR('hkunlp/instructor-large'))
-    #print(len(article.text_dict["Introduction_1"]) + len(article.text_dict["Introduction_0"]) )
+    # article.process_embedding_pipeline(processor, INSTRUCTOR('hkunlp/instructor-large'))
+    # print(len(article.text_dict["Introduction_1"]) + len(article.text_dict["Introduction_0"]) )
     # print(f'intro_0: {article.text_dict["Introduction_0"]}\n Intro_1: {article.text_dict["Introduction_1"]}')
     ner(article1)
-
-
-
-
 
 # def get_embedding(text, model="text-embedding-ada-002"):
 #    text = text.replace("\n", " ")
@@ -61,7 +67,7 @@ if INGESTION:
 #     new_dict[key] = get_embedding(value)
 
 
-#print(new_dict)
+# print(new_dict)
 
 """
 1. metadata building function
@@ -69,8 +75,6 @@ if INGESTION:
 3. text  embedding function
 3. Need C.R.U.D operations for db
 """
-
-
 
 # max_chars = 512
 # text_splitter = CharacterTextSplitter(max_chars)
@@ -97,7 +101,6 @@ if INGESTION:
 #     print(f'match_id: {match_id}\nstring id: {string_id}\nstart: {start}\nend: {end}\nspan: {span.text}')
 
 
-
-#print(article.text)
+# print(article.text)
 # print(article.text_dict.keys(),'\n\n\n')
-#print(article.text_dict['Introduction'])
+# print(article.text_dict['Introduction'])

@@ -109,14 +109,14 @@ class Category:
 Vector record
     vector_record = {
         "embedding": np.ndarray,
-        "encoding": np.ndarray
+        "encoding": np.ndarray # built from the text dict. Can use tiktoken.encode(text)
         "id": 1234,
         "title": "title of article",
         "metadata": {"section heading":{
-                "categories": ['bayesian_statistics', 'posterior_probability', 'bayes_estimation'],
-                "mentioned_people": ['william_bayes'],
-                "mentioned_places": ['london'],
-                "mentioned_topics": ['bayesian_economics', 'bayesian_deep_learning']
+                "Probability & Statistics": ['bayesian_statistics', 'posterior_probability', 'bayes_estimation'],
+                "Machine Learning": ['overfitting'],
+                "Mathematics": ['matrix multiplication'],
+                "People": ['machine learning engineer']
                 }
         }
     }
@@ -130,8 +130,8 @@ class Article:
     id: str
     text: str
     text_dict: Dict[str, str] = field(default_factory=dict)  # Text Dict and embedding Dict match on section heading.
-    embedding_dict: Dict[str, np.ndarray] = field(default_factory=dict)  # zip() should work well enough here
-    metadata: Dict[str, List[Dict[str, any]]] = field(default_factory=dict)
+    embedding_dict: Dict[str, np.ndarray] = field(default_factory=dict)
+    metadata: Dict[str, Dict[str, any]] = field(default_factory=dict)
     text_processor: any = None
 
     def process_text_pipeline(self, text_processor, exclude_section):
