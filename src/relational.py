@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
 from src.models import *
+from config import (rds_host, rds_dbname, rds_user, rds_password, rds_port)
+
 
 
 class RelationalDB(ABC):

@@ -4,6 +4,8 @@ from typing import List, Dict, Any, Optional, Tuple
 from src.models import Article, Category
 import re
 import os
+import requests
+import json
 import tiktoken
 import numpy as np
 from langchain.text_splitter import (TokenTextSplitter,
@@ -12,7 +14,6 @@ from langchain.text_splitter import (TokenTextSplitter,
 
 from config import test_pattern
 from spacy.lang.en import English
-
 
 
 class TextProcessor(ABC):
@@ -26,11 +27,11 @@ class TextProcessor(ABC):
         pass
 
     @abstractmethod
-    def build_embeddings(self, article):
+    def build_embeddings(self, article) -> Dict:
         pass
 
     @abstractmethod
-    def build_metadata(self, article, section_dict):
+    def build_metadata(self, article):
         pass
 
     @abstractmethod
@@ -40,6 +41,7 @@ class TextProcessor(ABC):
     @abstractmethod
     def extract_headings(self, article):
         pass
+
     @abstractmethod
     def chunk_text_dict(self, section_dict):
         pass
@@ -165,30 +167,23 @@ class BaseTextProcessor(TextProcessor):
                 print(section, num_tokens, 'insufficient_token_section')
         return f'Tokens in article: {sum(i for i in len_dict.values())}'
 
-    def build_embeddings(self, article: Article, model):
-        """
-        In terms of memory complexity, it may be better to
-        build embeddings and metadata right before CRUD operations
-        I mean this is theoretically before crud operations, but I suppose in the sense
-        that would likely not want to lug around three dictionaries of information
-        Since I am lugging around three dicts, I need to immediately delete from RAM memory
-        as soon as the sotrage operation takes place.
-        https://arxiv.org/pdf/2212.09741.pdf HK NLP Instructor model
-        Edits the text_dict in place to both chunk text and append embedding
+    def build_embeddings(self, article: Article) -> Dict:
+        # URL of your Flask API endpoint
+        api_url = "http://localhost:5000/build_embeddings"
 
-        :param article: Content of article
-        :param model: the model that embedding's are being built from. NKU NLP INSTRUCTOR
-        :return: article object
-        """
-        enc = tiktoken.get_encoding("cl100k_base")
-        instruction = "Represent the technical paragraph for retrieval:"
-        embed_dict = {}
-        for idx, (section, content) in enumerate(article.text_dict.items()):
-            # Need to edit this to handle content sections longer than n tokens
-            encodings = enc.encode(content)
-            embeddings = model.encode([[instruction, content]])
-            embed_dict[section] = (embeddings, encodings)
-        return embed_dict
+        json_article = article.json_serialize()
+        payload = {'article': json_article}
+
+        # Make the POST request
+        response = requests.post(api_url, json=payload)
+
+        # Check if the request was successful
+        if response.status_code == 200:
+            embed_dict = response.json()
+            return embed_dict
+        else:
+            print("Error in Embedding Encoding API call:", response.status_code, response.text)
+            return None
 
     def build_metadata(self, article: Article, **kwargs):
         metadata_dict = {}
@@ -207,6 +202,3 @@ class BaseTextProcessor(TextProcessor):
             # Convert sets to lists for final output
             metadata_dict[heading] = {key: list(value) for key, value in sub_metadata_dict.items()}
         return metadata_dict
-
-
-

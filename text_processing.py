@@ -48,15 +48,14 @@ if INGESTION:
 
     title, page_id, final_text = wiki_api.fetch_article_data(TITLE)
 
-    article = Article(category='filler category', title=TITLE,
-                      id=page_id, text=final_text, text_dict={},
-                      metadata_dict={}, text_processor=processor)
+    article = Article(title=TITLE, id=page_id, text=final_text, text_processor=processor)
 
-    article1 = article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
+    article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
 
-    article.process_embedding_pipeline(processor, INSTRUCTOR('hkunlp/instructor-large'))
-    for k, v in article.embedding_dict.items():
-        print(f'embeddings: {len(v[0])}')
+    article.process_embedding_pipeline(processor)
+    print(article.embedding_dict)
+    # for k, v in article.embedding_dict.items():
+    #     print(f'embeddings: {type(v[0]), v[0].shape}')
     # print(len(article.text_dict["Introduction_1"]) + len(article.text_dict["Introduction_0"]) )
     # print(f'intro_0: {article.text_dict["Introduction_0"]}\n Intro_1: {article.text_dict["Introduction_1"]}')
     #ner(article1)

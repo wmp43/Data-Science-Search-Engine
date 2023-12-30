@@ -7,7 +7,9 @@ from nltk.tokenize import word_tokenize
 from typing import List, Dict, Any, Optional, Tuple
 from openai import OpenAI
 from pydantic import BaseModel
-from config import test_pattern
+
+
+
 
 """
 vector = {
@@ -23,6 +25,164 @@ vector = {
     }
 }
 """
+
+
+test_pattern = [
+    {"label": "Probability & Statistics", "pattern": "normal distribution"},
+    {"label": "Probability & Statistics", "pattern": "poisson distribution"},
+    {"label": "Probability & Statistics", "pattern": "estimates of location"},
+    {"label": "Probability & Statistics", "pattern": "estimates of variability"},
+    {"label": "Probability & Statistics", "pattern": "confidence intervals"},
+    {"label": "Probability & Statistics", "pattern": "central limit theorem"},
+    {"label": "Probability & Statistics", "pattern": "bayes theorem"},
+    {"label": "Probability & Statistics", "pattern": "conditional probability"},
+    {"label": "Probability & Statistics", "pattern": "correlation"},
+    {"label": "Probability & Statistics", "pattern": "inference"},
+    {"label": "Probability & Statistics", "pattern": "selection bias"},
+    {"label": "Probability & Statistics", "pattern": "standard error"},
+    {"label": "Probability & Statistics", "pattern": "bootstrap"},
+    {"label": "Probability & Statistics", "pattern": "confidence intervals"},
+    {"label": "Probability & Statistics", "pattern": "t distribution"},
+    {"label": "Probability & Statistics", "pattern": "binomial distribution"},
+    {"label": "Probability & Statistics", "pattern": "chi-square distribution"},
+    {"label": "Probability & Statistics", "pattern": "f distribution"},
+    {"label": "Probability & Statistics", "pattern": "exponential distribution"},
+    {"label": "Probability & Statistics", "pattern": "probability distribution"},
+    {"label": "Probability & Statistics", "pattern": "probability mass function"},
+    {"label": "Probability & Statistics", "pattern": "cumulative density function"},
+    {"label": "Probability & Statistics", "pattern": "probability density function"},
+    {"label": "Probability & Statistics", "pattern": "hypothesis testing"},
+    {"label": "Probability & Statistics", "pattern": "experimentation"},
+    {"label": "Probability & Statistics", "pattern": "a/b testing"},
+    {"label": "Probability & Statistics", "pattern": "p value"},
+    {"label": "Probability & Statistics", "pattern": "anova"},
+    {"label": "Probability & Statistics", "pattern": "regression analysis"},
+    {"label": "Probability & Statistics", "pattern": "time series analysis"},
+    {"label": "Probability & Statistics", "pattern": "markov models"},
+    {"label": "Probability & Statistics", "pattern": "monte carlo simulation"},
+    {"label": "Probability & Statistics", "pattern": "factor analysis"},
+    {"label": "Probability & Statistics", "pattern": "causal inference"},
+    {"label": "Probability & Statistics", "pattern": "probability space"},
+    {"label": "Probability & Statistics", "pattern": "survival analysis"},
+    {"label": "Probability & Statistics", "pattern": "logistic regression"},
+    {"label": "Probability & Statistics", "pattern": "cluster analysis"},
+    {"label": "Probability & Statistics", "pattern": "dimensionality reduction"},
+    {"label": "Probability & Statistics", "pattern": "p-value"},
+    {"label": "Probability & Statistics", "pattern": "z-test"},
+    {"label": "Probability & Statistics", "pattern": "data normalization"},
+    {"label": "Probability & Statistics", "pattern": "feature scaling"},
+    {"label": "Probability & Statistics", "pattern": "data imputation"},
+    {"label": "Probability & Statistics", "pattern": "sampling methods"},
+    {"label": "Probability & Statistics", "pattern": "statistical significance"},
+    {"label": "Probability & Statistics", "pattern": "descriptive statistics"},
+    {"label": "Probability & Statistics", "pattern": "inferential statistics"},
+    {"label": "Probability & Statistics", "pattern": "random variables"},
+    {"label": "Probability & Statistics", "pattern": "sampling distributions"},
+    {"label": "Probability & Statistics", "pattern": "point estimation"},
+    {"label": "Probability & Statistics", "pattern": "variance analysis"},
+    {"label": "Probability & Statistics", "pattern": "covariance analysis"},
+    {"label": "Probability & Statistics", "pattern": "statistical power"},
+    {"label": "Probability & Statistics", "pattern": "likelihood functions"},
+    {"label": "Probability & Statistics", "pattern": "random variables"},
+    {"label": "Machine Learning", "pattern": "supervised learning"},
+    {"label": "Machine Learning", "pattern": "regression"},
+    {"label": "Machine Learning", "pattern": "bayesian network"},
+    {"label": "Machine Learning", "pattern": "linear regression"},
+    {"label": "Machine Learning", "pattern": "directed acyclic graph"},
+    {"label": "Machine Learning", "pattern": "classification"},
+    {"label": "Machine Learning", "pattern": "unsupervised learning"},
+    {"label": "Machine Learning", "pattern": "reinforcement learning"},
+    {"label": "Machine Learning", "pattern": "neural networks"},
+    {"label": "Machine Learning", "pattern": "deep learning"},
+    {"label": "Machine Learning", "pattern": "convolutional neural networks"},
+    {"label": "Machine Learning", "pattern": "recurrent neural networks"},
+    {"label": "Machine Learning", "pattern": "long short-term memory networks"},
+    {"label": "Machine Learning", "pattern": "transfer learning"},
+    {"label": "Machine Learning", "pattern": "feature extraction"},
+    {"label": "Machine Learning", "pattern": "feature selection"},
+    {"label": "Machine Learning", "pattern": "decision tree"},
+    {"label": "Machine Learning", "pattern": "random forest"},
+    {"label": "Machine Learning", "pattern": "support-vector machine"},
+    {"label": "Machine Learning", "pattern": "gradient boosting"},
+    {"label": "Machine Learning", "pattern": "adaptive boosting"},
+    {"label": "Machine Learning", "pattern": "ensemble methods"},
+    {"label": "Machine Learning", "pattern": "k-means clustering"},
+    {"label": "Machine Learning", "pattern": "hierarchical clustering"},
+    {"label": "Machine Learning", "pattern": "dimensionality reduction"},
+    {"label": "Machine Learning", "pattern": "principal component analysis"},
+    {"label": "Machine Learning", "pattern": "singular value decomposition"},
+    {"label": "Machine Learning", "pattern": "t-distributed stochastic neighbor embedding"},
+    {"label": "Machine Learning", "pattern": "natural language processing"},
+    {"label": "Machine Learning", "pattern": "text mining"},
+    {"label": "Machine Learning", "pattern": "perceptron"},
+    {"label": "Machine Learning", "pattern": "word embeddings"},
+    {"label": "Machine Learning", "pattern": "bag of words"},
+    {"label": "Machine Learning", "pattern": "tf-idf"},
+    {"label": "Machine Learning", "pattern": "computer vision"},
+    {"label": "Machine Learning", "pattern": "image recognition"},
+    {"label": "Machine Learning", "pattern": "object detection"},
+    {"label": "Machine Learning", "pattern": "anomaly detection"},
+    {"label": "Machine Learning", "pattern": "predictive modeling"},
+    {"label": "Machine Learning", "pattern": "cross-validation"},
+    {"label": "Machine Learning", "pattern": "model evaluation"},
+    {"label": "Machine Learning", "pattern": "model selection"},
+    {"label": "Machine Learning", "pattern": "hyperparameter tuning"},
+    {"label": "Machine Learning", "pattern": "overfitting"},
+    {"label": "Machine Learning", "pattern": "underfitting"},
+    {"label": "Machine Learning", "pattern": "bias-variance tradeoff"},
+    {"label": "Machine Learning", "pattern": "data augmentation"},
+    {"label": "Machine Learning", "pattern": "data preprocessing"},
+    {"label": "Machine Learning", "pattern": "data splitting"},
+    {"label": "Machine Learning", "pattern": "performance metrics"},
+    {"label": "Machine Learning", "pattern": "accuracy"},
+    {"label": "Machine Learning", "pattern": "precision"},
+    {"label": "Machine Learning", "pattern": "recall"},
+    {"label": "Machine Learning", "pattern": "f1 score"},
+    {"label": "Machine Learning", "pattern": "confusion matrix"},
+    {"label": "Machine Learning", "pattern": "ROC curve"},
+    {"label": "Machine Learning", "pattern": "AUC score"},
+    {"label": "Machine Learning", "pattern": "total operating characteristic"},
+    {"label": "Machine Learning", "pattern": "receiver operating characteristic"},
+    {"label": "Machine Learning", "pattern": "area under the curve"},
+    {"label": "Mathematics", "pattern": "stochastic process"},
+    {"label": "Mathematics", "pattern": "calculus"},
+    {"label": "Mathematics", "pattern": "linear algebra"},
+    {"label": "Mathematics", "pattern": "matrix"},
+    {"label": "Mathematics", "pattern": "vector"},
+    {"label": "Mathematics", "pattern": "markov chains"},
+    {"label": "Mathematics", "pattern": "gradient descent"},
+    {"label": "Mathematics", "pattern": "matrix multiplication"},
+    {"label": "Mathematics", "pattern": "derivative"},
+    {"label": "Mathematics", "pattern": "integral"},
+    {"label": "Mathematics", "pattern": "taylor series"},
+    {"label": "Mathematics", "pattern": "random walk"},
+    {"label": "Mathematics", "pattern": "wiener process"},
+    {"label": "Mathematics", "pattern": "poisson process"},
+    {"label": "Mathematics", "pattern": "fourier transform"},
+    {"label": "Mathematics", "pattern": "laplace transform"},
+    {"label": "Mathematics", "pattern": "differential equations"},
+    {"label": "Mathematics", "pattern": "bayesian inference"},
+    {"label": "Mathematics", "pattern": "probability theory"},
+    {"label": "Mathematics", "pattern": "statistical modeling"},
+    {"label": "Mathematics", "pattern": "optimization theory"},
+    {"label": "Mathematics", "pattern": "discrete mathematics"},
+    {"label": "Mathematics", "pattern": "combinatorics"},
+    {"label": "Mathematics", "pattern": "graph theory"},
+    {"label": "Mathematics", "pattern": "numerical methods"},
+    {"label": "Mathematics", "pattern": "game theory"},
+    {"label": "Mathematics", "pattern": "eigenvalues and eigenvectors"},
+    {"label": "Mathematics", "pattern": "convex optimization"},
+    {"label": "Mathematics", "pattern": "topology"},
+    {"label": "Mathematics", "pattern": "real analysis"},
+    {"label": "Mathematics", "pattern": "complex analysis"},
+    {"label": "Mathematics", "pattern": "number theory"},
+    {"label": "Mathematics", "pattern": "set theory"},
+    {"label": "Mathematics", "pattern": "information theory"},
+    {"label": "Mathematics", "pattern": "chaos theory"},
+    {"label": "Mathematics", "pattern": "nonlinear dynamics"},
+    {"label": "People", "pattern": "machine learning engineers"},
+    {"label": "People", "pattern": "researchers"}
+]
 
 
 @dataclass
@@ -127,12 +287,11 @@ Vector record
 
 @dataclass
 class Article:
-    category: str
     title: str
     id: str
     text: str
     text_dict: Dict[str, str] = field(default_factory=dict)  # Text Dict and embedding Dict match on section heading.
-    embedding_dict: Dict[str, np.ndarray] = field(default_factory=dict)
+    embedding_dict: Dict[str, Tuple] = field(default_factory=dict)  # [0] embedding for vec search -- [1] encoding
     metadata_dict: Dict[str, Dict[str, any]] = field(default_factory=dict)
     text_processor: any = None
 
@@ -147,7 +306,7 @@ class Article:
         self.text_dict = chunked_text_dict
         return self
 
-    def process_embedding_pipeline(self, text_processor, model):
+    def process_embedding_pipeline(self, text_processor):
         """
         This method may only be invoked after the process_text_pipeline method.
         This will return a dictionary with section headings and token lens for
@@ -155,7 +314,7 @@ class Article:
         :param text_processor: BaseTextProcessor Class
         :return: self
         """
-        embed_dict = text_processor.build_embeddings(self, model)
+        embed_dict = text_processor.build_embeddings(self)
         self.embedding_dict = embed_dict
         return self
 
@@ -182,11 +341,25 @@ class Article:
     def __str__(self):
         return f"Article {self.id}: {self.title}"
 
-    def serialize_self(self):
+    def json_serialize(self):
         """
-        This function should prepare the contents of this data class to be able to up serted into
+        This function should prepare the contents of this data class to be passed in a POST request and upserted to db
         :return: Bool
         """
+        article_dict = {
+            'title': self.title,
+            'id': self.id,
+            'text_dict': self.text_dict,
+            'embedding_dict': self.embedding_dict,
+            'metadata_dict': self.metadata_dict,
+            'text_processor': None
+        }
+
+        return article_dict
+
+    @staticmethod
+    def json_deserialize(data: dict):
+        return Article(**data)
 
 
 class Query(BaseModel):
