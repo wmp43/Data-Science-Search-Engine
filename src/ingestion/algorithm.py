@@ -38,7 +38,7 @@ while list_of_categories:
             article_handler = Article(category, title, id, "", None, f'{BASE_WIKI_URL}/{title}', "", BaseTextProcessor())
             if article_handler.title in called_articles:  # if we already found this article in different category,
                 # we want to add to the category metadata of the vecdb
-                article_handler.update_categories(article_handler.category)
+                update_categories(article_handler.category)
                 """
                 These article methods must work across chunks in the db. A lack of breadth failure would chunk the app
                 """

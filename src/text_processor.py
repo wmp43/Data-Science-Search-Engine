@@ -187,7 +187,7 @@ class BaseTextProcessor(TextProcessor):
             # Need to edit this to handle content sections longer than n tokens
             encodings = enc.encode(content)
             embeddings = model.encode([[instruction, content]])
-            embed_dict[section] = (np.array(embeddings), encodings)
+            embed_dict[section] = (embeddings, encodings)
         return embed_dict
 
     def build_metadata(self, article: Article, **kwargs):

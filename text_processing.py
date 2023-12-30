@@ -53,10 +53,13 @@ if INGESTION:
                       metadata_dict={}, text_processor=processor)
 
     article1 = article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
-    # article.process_embedding_pipeline(processor, INSTRUCTOR('hkunlp/instructor-large'))
+
+    article.process_embedding_pipeline(processor, INSTRUCTOR('hkunlp/instructor-large'))
+    for k, v in article.embedding_dict.items():
+        print(f'embeddings: {len(v[0])}')
     # print(len(article.text_dict["Introduction_1"]) + len(article.text_dict["Introduction_0"]) )
     # print(f'intro_0: {article.text_dict["Introduction_0"]}\n Intro_1: {article.text_dict["Introduction_1"]}')
-    ner(article1)
+    #ner(article1)
 
 # def get_embedding(text, model="text-embedding-ada-002"):
 #    text = text.replace("\n", " ")

@@ -117,7 +117,8 @@ Vector record
                 "Probability & Statistics": ['bayesian_statistics', 'posterior_probability', 'bayes_estimation'],
                 "Machine Learning": ['overfitting'],
                 "Mathematics": ['matrix multiplication'],
-                "People": ['machine learning engineer']
+                "People": ['machine learning engineer'],
+                "Categories":['Category_1', 'Category_2']
                 }
         }
     }
@@ -140,13 +141,13 @@ class Article:
         text_dict = text_processor.build_section_dict(self, exclude_section)
         # creates dictionary with section headings and text
         clean_text_dict = text_processor.remove_curly_brackets(text_dict)
-        #removes latex
+        # removes latex
         chunked_text_dict = text_processor.chunk_text_dict(clean_text_dict)
         # chunks the section headings for vector embeddings. We should aim for ~375 tiktoken tokens per embedding
         self.text_dict = chunked_text_dict
         return self
 
-    def process_embedding_encoding_pipeline(self, text_processor, model):
+    def process_embedding_pipeline(self, text_processor, model):
         """
         This method may only be invoked after the process_text_pipeline method.
         This will return a dictionary with section headings and token lens for
@@ -178,14 +179,14 @@ class Article:
         len_dict = text_processor.build_token_len_dict(self)
         return len_dict
 
-    def update_categories(self, new_category):
-        # If article found in new
-        if 1 != 0: print('I knew it!')
-        # still needs implementation
-        return new_category
-
     def __str__(self):
         return f"Article {self.id}: {self.title}"
+
+    def serialize_self(self):
+        """
+        This function should prepare the contents of this data class to be able to up serted into
+        :return: Bool
+        """
 
 
 class Query(BaseModel):
@@ -198,5 +199,3 @@ class Query(BaseModel):
         # embed the query
         # search the db for cosine_sim argmax
         pass
-
-
