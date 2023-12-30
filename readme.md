@@ -1,4 +1,4 @@
-# WikiSearch ReadMe
+# DSSE ReadMe
 ### Motivation: Build large scale NLP/IR system using wikipedia as a case study
 ## Core Functionality by Feature
 1. Search 
