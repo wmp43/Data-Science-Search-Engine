@@ -30,7 +30,8 @@ def ner(article):
                 sub_metadata_dict[ent.label_] = {ent.text}
         # Convert sets to lists for final output
         metadata_dict[heading] = {key: list(value) for key, value in sub_metadata_dict.items()}
-    article.metadata = metadata_dict
+    article.metadata_dict = metadata_dict
+    print(metadata_dict)
     return None
 
 INGESTION = True
@@ -49,7 +50,7 @@ if INGESTION:
 
     article = Article(category='filler category', title=TITLE,
                       id=page_id, text=final_text, text_dict={},
-                      metadata={}, text_processor=processor)
+                      metadata_dict={}, text_processor=processor)
 
     article1 = article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
     # article.process_embedding_pipeline(processor, INSTRUCTOR('hkunlp/instructor-large'))

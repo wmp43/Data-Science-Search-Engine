@@ -39,7 +39,11 @@ class RelationalDB(ABC):
         pass
 
 
-class LocalRelationalDB(RelationalDB):
+class PgVector(RelationalDB):
+    """
+    Extension of abstract base class specifically for pgvetor on aws rds
+
+    """
     def connect(self, credentials: Dict[str, Any]):
         # Implement actual connection logic
         pass

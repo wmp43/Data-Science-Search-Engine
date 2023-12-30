@@ -10,6 +10,10 @@ from langchain.text_splitter import (TokenTextSplitter,
                                      CharacterTextSplitter,
                                      SpacyTextSplitter)
 
+from config import test_pattern
+from spacy.lang.en import English
+
+
 
 class TextProcessor(ABC):
 
@@ -186,21 +190,23 @@ class BaseTextProcessor(TextProcessor):
             embed_dict[section] = (np.array(embeddings), encodings)
         return embed_dict
 
-    def build_metadata(self, article: Article, section_dict: {}):
-        """"
-        :param article: article object containing text,
-        :param section_dict: dictionary with sections
-        :return: dictionary with relevant metadata
-        """
-        for idx, text_chunk in enumerate(article.text):
-            dict = {'categories': [article.category], "mentioned_people": [],
-                    "mentioned_places": [], "mentioned_topics": []}
+    def build_metadata(self, article: Article, **kwargs):
+        metadata_dict = {}
+        nlp = English()
+        ruler = nlp.add_pipe("entity_ruler")
+        ruler.add_patterns(test_pattern)
 
-            # need to search through text and find relevant mentions
-
-            article.metadata[idx] = dict
-            # For each chunk of text
-        return None
+        for heading, content in article.text_dict.items():
+            sub_metadata_dict = {}
+            doc = nlp(content)
+            for ent in doc.ents:
+                if ent.label_ in sub_metadata_dict:
+                    sub_metadata_dict[ent.label_].add(ent.text)
+                else:
+                    sub_metadata_dict[ent.label_] = {ent.text}
+            # Convert sets to lists for final output
+            metadata_dict[heading] = {key: list(value) for key, value in sub_metadata_dict.items()}
+        return metadata_dict
 
 
 

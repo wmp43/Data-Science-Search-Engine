@@ -7,6 +7,7 @@ from nltk.tokenize import word_tokenize
 from typing import List, Dict, Any, Optional, Tuple
 from openai import OpenAI
 from pydantic import BaseModel
+from config import test_pattern
 
 """
 vector = {
@@ -131,7 +132,7 @@ class Article:
     text: str
     text_dict: Dict[str, str] = field(default_factory=dict)  # Text Dict and embedding Dict match on section heading.
     embedding_dict: Dict[str, np.ndarray] = field(default_factory=dict)
-    metadata: Dict[str, Dict[str, any]] = field(default_factory=dict)
+    metadata_dict: Dict[str, Dict[str, any]] = field(default_factory=dict)
     text_processor: any = None
 
     def process_text_pipeline(self, text_processor, exclude_section):
@@ -166,6 +167,8 @@ class Article:
         :param text_processor: TextProcessor object to build metadata
         :return: self
         """
+        metadata_dict = text_processor.build_metadata(self, pattern=test_pattern)
+        self.metadata_dict = metadata_dict
 
     def show_headings(self, text_processor):
         text_processor.extract_headings(self)
