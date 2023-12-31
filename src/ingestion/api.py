@@ -67,67 +67,67 @@ class WikipediaAPI(BaseModel):
 
 
 
-class HuggingFaceAPI(BaseModel):
-    """
-    Llama model deployed to HF for text cleaning and summarization
-
-    """
-    token: str
-    endpoint: str
-
-    def fetch_summary(self, text_chunk: str) -> str:
-        """
-        :param text_chunk: Chunk of tokenized text that is going to get summarized
-        :return: summary str
-        """
-        hf_token = os.getenv("hf_token")
-        headers = {"Authorization": f"Bearer {hf_token}", "Content-Type": "application/json"}
-        payload = {"inputs": f"{text_chunk}"}
-
-        response = requests.post(self.endpoint, headers=headers, data=json.dumps(payload))
-        response_json = response.json()
-
-        return response_json[0]["generated_text"]
-
-
-class OpenAIAPI(BaseModel):
-    """
-    ahhh ahh ahhhhh ahhh ahhh
-    """
-    token: str
-
-    def fetch_summary(self, text_chunk):
-        client = OpenAI(
-            organization='org-FkeFbkQ4XzxxQoN5PJ9APM7D'
-        )
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are a mathematical text summarizer. Summarize the following:"},
-                {"role": "user", "content": text_chunk}
-            ]
-        )
-
-        summary = response['choices'][0]['message']['content']
-        return summary
-
-
-
-def remove_nested_curly_braces(text):
-    stack = []
-    to_remove = []
-    text_list = list(text)
-
-    for i, char in enumerate(text_list):
-        if char == '{':
-            stack.append(i - 1)
-        elif char == '}':
-            if stack:
-                start = stack.pop()
-                if not stack:
-                    to_remove.append((start, i))
-
-    for start, end in reversed(to_remove):
-        del text_list[start:end + 1]
-
-    return ''.join(text_list)
+# class HuggingFaceAPI(BaseModel):
+#     """
+#     Llama model deployed to HF for text cleaning and summarization
+#
+#     """
+#     token: str
+#     endpoint: str
+#
+#     def fetch_summary(self, text_chunk: str) -> str:
+#         """
+#         :param text_chunk: Chunk of tokenized text that is going to get summarized
+#         :return: summary str
+#         """
+#         hf_token = os.getenv("hf_token")
+#         headers = {"Authorization": f"Bearer {hf_token}", "Content-Type": "application/json"}
+#         payload = {"inputs": f"{text_chunk}"}
+#
+#         response = requests.post(self.endpoint, headers=headers, data=json.dumps(payload))
+#         response_json = response.json()
+#
+#         return response_json[0]["generated_text"]
+#
+#
+# class OpenAIAPI(BaseModel):
+#     """
+#     ahhh ahh ahhhhh ahhh ahhh
+#     """
+#     token: str
+#
+#     def fetch_summary(self, text_chunk):
+#         client = OpenAI(
+#             organization='org-FkeFbkQ4XzxxQoN5PJ9APM7D'
+#         )
+#         response = client.chat.completions.create(
+#             model="gpt-3.5-turbo",
+#             messages=[
+#                 {"role": "system", "content": "You are a mathematical text summarizer. Summarize the following:"},
+#                 {"role": "user", "content": text_chunk}
+#             ]
+#         )
+#
+#         summary = response['choices'][0]['message']['content']
+#         return summary
+#
+#
+#
+# def remove_nested_curly_braces(text):
+#     stack = []
+#     to_remove = []
+#     text_list = list(text)
+#
+#     for i, char in enumerate(text_list):
+#         if char == '{':
+#             stack.append(i - 1)
+#         elif char == '}':
+#             if stack:
+#                 start = stack.pop()
+#                 if not stack:
+#                     to_remove.append((start, i))
+#
+#     for start, end in reversed(to_remove):
+#         del text_list[start:end + 1]
+#
+#     return ''.join(text_list)

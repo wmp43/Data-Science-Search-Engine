@@ -47,6 +47,7 @@ if INGESTION:
     processor = BaseTextProcessor()
 
     title, page_id, final_text = wiki_api.fetch_article_data(TITLE)
+    print(final_text)
 
     article = Article(title=TITLE, id=page_id, text=final_text, text_processor=processor)
 
