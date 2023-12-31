@@ -3,19 +3,17 @@ import tiktoken  # Assuming this is a module you have for encoding
 from models import Article
 from InstructorEmbedding import INSTRUCTOR
 
-
 app = Flask(__name__)
 
 model = INSTRUCTOR('hkunlp/instructor-large')
 
 
-@app.route('/build_embeddings', methods=['POST'])
-def build_embeddings():
+@app.route('/build_embeddings_api', methods=['POST'])
+def build_embeddings_api():
     article_data = request.json.get('article')
-    print(article_data)
     article = Article.json_deserialize(article_data)
     embed_dict = _build_embeddings(article, model)
-    return jsonify(embed_dict)
+    return embed_dict
 
 
 def _build_embeddings(article, model):

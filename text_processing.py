@@ -51,8 +51,9 @@ if INGESTION:
     article = Article(title=TITLE, id=page_id, text=final_text, text_processor=processor)
 
     article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
-
+    article.print_attribute_types()
     article.process_embedding_pipeline(processor)
+
     print(article.embedding_dict)
     # for k, v in article.embedding_dict.items():
     #     print(f'embeddings: {type(v[0]), v[0].shape}')

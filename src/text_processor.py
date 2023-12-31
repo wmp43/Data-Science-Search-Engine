@@ -169,7 +169,7 @@ class BaseTextProcessor(TextProcessor):
 
     def build_embeddings(self, article: Article) -> Dict:
         # URL of your Flask API endpoint
-        api_url = "http://localhost:5000/build_embeddings"
+        api_url = "http://127.0.0.1:5000/build_embeddings_api"
 
         json_article = article.json_serialize()
         payload = {'article': json_article}

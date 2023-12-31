@@ -295,6 +295,16 @@ class Article:
     metadata_dict: Dict[str, Dict[str, any]] = field(default_factory=dict)
     text_processor: any = None
 
+    def print_attribute_types(self):
+        for attribute, value in self.__dict__.items():
+            print(f"{attribute} ({type(value)})")
+            if isinstance(value, dict):
+                for key, val in value.items():
+                    print(f"  {key}: {type(val)}")
+                    if isinstance(val, dict):  # For nested dictionaries
+                        for sub_key, sub_val in val.items():
+                            print(f"    {sub_key}: {type(sub_val)}")
+
     def process_text_pipeline(self, text_processor, exclude_section):
         # This should include a pipeline to process text
         text_dict = text_processor.build_section_dict(self, exclude_section)
@@ -349,6 +359,7 @@ class Article:
         article_dict = {
             'title': self.title,
             'id': self.id,
+            'text': self.text,
             'text_dict': self.text_dict,
             'embedding_dict': self.embedding_dict,
             'metadata_dict': self.metadata_dict,
