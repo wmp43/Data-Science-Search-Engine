@@ -69,7 +69,7 @@ class PgVector(RelationalDB):
         pass
 
 
-class EmbeddingModelDB:
+class EmbeddingModelTable:
     def __init__(self, dbname, user, password, host, port):
         self.dbname = dbname
         self.user = user
@@ -88,6 +88,7 @@ class EmbeddingModelDB:
                 host=self.host,
                 port=self.port
             )
+            print(f'Connected to the database {self.dbname} successfully!')
         except psycopg2.Error as e:
             print(f"Unable to connect to the database: {e}")
 
@@ -108,8 +109,15 @@ class EmbeddingModelDB:
         :return: Record with the title
         """
         with self.conn.cursor() as cur:
-            cur.execute("SELECT * FROM public.embedding_model_dev WHERE title = %s", (title,))
+            cur.execute("SELECT * FROM embedding_model_dev WHERE title = %s", (title,))
             return cur.fetchone()
+
+    def print_sample_data(self):
+        with self.conn.cursor() as cur:
+            cur.execute("SELECT * FROM embedding_model_dev LIMIT 3")
+            records = cur.fetchall()
+            for record in records:
+                print(record)
 
     def update_record(self, title: str):
         # Logic to update a category in the database
