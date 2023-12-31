@@ -1,16 +1,11 @@
 """
 This is a pipeline from Article instantiation to vector embedding
 """
-import os
-from config import OPENAI_API_KEY, OPENAI_ORG_KEY
 from src.text_processor import BaseTextProcessor
 from src.models import Article
-from InstructorEmbedding import INSTRUCTOR
-import torch
-from src.ingestion.api import WikipediaAPI
+from src.api import WikipediaAPI
 from spacy.lang.en import English
-from config import ner_pattern, test_pattern
-import json
+from config import test_pattern
 
 NER = True
 

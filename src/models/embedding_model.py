@@ -1,10 +1,17 @@
 # Author: Robert Guthrie
-from src.ingestion.api import WikipediaAPI
+from src.api import WikipediaAPI
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from config import (rds_host, rds_dbname, rds_user, rds_password, rds_port)
+from src.relational import EmbeddingModelDB
+
 torch.manual_seed(1)
+
+
+# todo: Built proper embedding model
+
 
 def remove_nested_curly_braces(text):
     stack = []
@@ -31,7 +38,6 @@ embeds = nn.Embedding(2, 5)  # 2 words in vocab, 5 dimensional embeddings
 lookup_tensor = torch.tensor([word_to_ix["hello"]], dtype=torch.long)
 hello_embed = embeds(lookup_tensor)
 print(hello_embed)
-
 
 CONTEXT_SIZE = 2
 EMBEDDING_DIM = 10
@@ -83,7 +89,6 @@ optimizer = optim.SGD(model.parameters(), lr=0.001)
 for epoch in range(10):
     total_loss = 0
     for context, target in ngrams:
-
         # Step 1. Prepare the inputs to be passed to the model (i.e, turn the words
         # into integer indices and wrap them in tensors)
         context_idxs = torch.tensor([word_to_ix[w] for w in context], dtype=torch.long)
@@ -113,7 +118,6 @@ print(losses)  # The loss decreased every iteration over the training data!
 # To get the embedding of a particular word, e.g. "beauty"
 print(model.embeddings.weight[word_to_ix["beauty"]])
 
-
 CONTEXT_SIZE = 2  # 2 words to the left, 2 to the right
 raw_text = """We are about to study the idea of a computational process.
 Computational processes are abstract beings that inhabit computers.
@@ -130,13 +134,12 @@ word_to_ix = {word: i for i, word in enumerate(vocab)}
 data = []
 for i in range(CONTEXT_SIZE, len(raw_text) - CONTEXT_SIZE):
     context = (
-        [raw_text[i - j - 1] for j in range(CONTEXT_SIZE)]
-        + [raw_text[i + j + 1] for j in range(CONTEXT_SIZE)]
+            [raw_text[i - j - 1] for j in range(CONTEXT_SIZE)]
+            + [raw_text[i + j + 1] for j in range(CONTEXT_SIZE)]
     )
     target = raw_text[i]
     data.append((context, target))
 print(data[:5])
-
 
 # class CBOW(nn.Module):
 #
