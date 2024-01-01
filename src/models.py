@@ -306,13 +306,9 @@ class Article:
                             print(f"    {sub_key}: {type(sub_val)}")
 
     def process_text_pipeline(self, text_processor, exclude_section):
-        # This should include a pipeline to process text
         text_dict = text_processor.build_section_dict(self, exclude_section)
-        # creates dictionary with section headings and text
         clean_text_dict = text_processor.remove_curly_brackets(text_dict)
-        # removes latex
         chunked_text_dict = text_processor.chunk_text_dict(clean_text_dict)
-        # chunks the section headings for vector embeddings. We should aim for ~375 tiktoken tokens per embedding
         self.text_dict = chunked_text_dict
         return self
 
@@ -328,17 +324,18 @@ class Article:
         self.embedding_dict = embed_dict
         return self
 
-    def process_metadata_pipeline(self, text_processor):
-        """
-        December 19th
-        https://spacy.io/usage/rule-based-matching
-        This method should build a metadata object for each embedded section.
-        By extension I guess it should also support
-        :param text_processor: TextProcessor object to build metadata
-        :return: self
-        """
-        metadata_dict = text_processor.build_metadata(self, pattern=test_pattern)
-        self.metadata_dict = metadata_dict
+    # todo: uncomment this. Or find a way to suppress spaCy warnings they are so annoying
+    # def process_metadata_pipeline(self, text_processor):
+    #     """
+    #     December 19th
+    #     https://spacy.io/usage/rule-based-matching
+    #     This method should build a metadata object for each embedded section.
+    #     By extension I guess it should also support
+    #     :param text_processor: TextProcessor object to build metadata
+    #     :return: self
+    #     """
+    #     metadata_dict = text_processor.build_metadata(self, pattern=test_pattern)
+    #     self.metadata_dict = metadata_dict
 
     def show_headings(self, text_processor):
         text_processor.extract_headings(self)

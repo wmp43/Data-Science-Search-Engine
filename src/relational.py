@@ -114,7 +114,7 @@ class EmbeddingModelTable:
 
     def print_sample_data(self):
         with self.conn.cursor() as cur:
-            cur.execute("SELECT * FROM embedding_model_dev LIMIT 3")
+            cur.execute("SELECT * FROM embedding_model_dev LIMIT 10")
             records = cur.fetchall()
             for record in records:
                 print(record)
