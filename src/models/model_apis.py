@@ -32,12 +32,12 @@ def build_embeddings_api():
     return embed_dict
 
 
-@app.route('/custom_embeddings_api', methods=['POST'])
+@app.route('/ner_api', methods=['POST'])
 def build_embeddings_api():
     # todo: develop model and store json path
     model.load("SOMEJSONPATH")
-    embedding = model.predict("ARG_TEXT")
-    return embedding
+    ner = model.predict("ARG_TEXT")
+    return ner
 
 
 if __name__ == '__main__':

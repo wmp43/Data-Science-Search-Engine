@@ -1,8 +1,6 @@
-from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
-from src.models import *
 import psycopg2
-from psycopg2 import sql
+import pandas as pd
 
 
 class RelationalDB(ABC):
@@ -114,14 +112,18 @@ class EmbeddingModelTable:
 
     def print_sample_data(self):
         with self.conn.cursor() as cur:
-            cur.execute("SELECT * FROM embedding_model_dev LIMIT 10")
+            cur.execute("SELECT * FROM embedding_model_dev")
             records = cur.fetchall()
             for record in records:
                 print(record)
 
-    def update_record(self, title: str):
-        # Logic to update a category in the database
-        pass
+    def get_all_data(self):
+        with self.conn.cursor() as cur:
+            cur.execute("SELECT * FROM embedding_model_dev")
+            columns = [desc[0] for desc in cur.description]
+            print(columns)
+            data = [dict(zip(columns, row)) for row in cur.fetchall()]
+        return pd.DataFrame(data)
 
     def close_connection(self):
         if self.conn is not None:
