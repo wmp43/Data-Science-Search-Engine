@@ -59,10 +59,12 @@ data_science_articles = [
     'Data_integration',
     'Predictive_modelling',
     'Decision_tree_learning',
+    'Decision_theory',
     'Association_rule_learning',
     'Ensemble_learning',
     'Gradient_boosting',
     'Neural_network_software',
+    'Neural_network',
     'Evolutionary_algorithm',
     'Genetic_programming',
     'Fuzzy_logic',
@@ -100,20 +102,15 @@ data_science_articles = [
     'Design_of_experiments',
     'Statistical_learning_theory',
     'Algorithmic_bias',
-    'Artificial_intelligence_ethics',
     'Computational_learning_theory',
-    'Data_mining_algorithms',
     'Data_warehouse',
-    'Database_indexing',
     'Deep_reinforcement_learning',
     'Ethics_of_artificial_intelligence',
-    'Explainable_AI',
     'Feature_learning',
     'Game_theory',
     'Graphical_model',
-    'Knowledge_representation',
+    'Knowledge_representation_and_reasoning',
     'Learning_to_rank',
-    'Machine_learning_in_healthcare',
     'Machine_perception',
     'Machine_translation',
     'Multi-agent_system',
@@ -121,46 +118,39 @@ data_science_articles = [
     'Pattern_recognition',
     'Predictive_analytics',
     'Recommender_system',
-    'Semantic_web',
     'Speech_recognition',
     'Statistical_classification',
     'Structured_prediction',
     'Text_mining',
-    'Text_to_speech',
-    'Time_series_analysis',
     'Anomaly_detection',
     'Autoencoder',
-    'Bias-variance_tradeoff',
-    'Classification_algorithm',
-    'Clustering_algorithm',
+    'Bias–variance_tradeoff',
+    'Nearest_neighbor_search',
+    'Clustering_coefficient',
     'Convolutional_neural_network',
-    'Data_preprocessing',
     'Decision_boundary',
-    'Dimensionality_reduction_algorithm',
+    'Dimensionality_reduction',
     'Ensemble_methods',
+    'Cluster_analysis',
     'Feature_selection',
     'Generative_adversarial_network',
     'Hyperparameter_optimization',
-    'Imbalanced_data',
-    'Loss_functions',
-    'Metric_learning',
-    'Model_evaluation',
-    'Model_fitting',
-    'Neural_network_architecture',
-    'Outlier_detection',
+    'Loss_function',
+    'Similarity_learning',
+    'Large_language_model',
+    'Curve_fitting',
     'Overfitting',
     'Precision_and_recall',
     'Recurrent_neural_network',
     'Regularization',
     'Transfer_learning',
-    'Training_dataset',
-    'Validation_dataset',
+    'Training,_validation,_and_test_data_sets',
     'XGBoost',
     'Probability_theory',
     'Probability_distribution',
     'Conditional_probability',
-    'Bayes_theorem',
-    'Statistical_independence',
+    "Bayes'_theorem",
+    'Independence_(probability_theory)',
     'Random_variable',
     'Central_limit_theorem',
     'Variance',
@@ -168,32 +158,32 @@ data_science_articles = [
     'Covariance',
     'Correlation',
     'Sampling_distribution',
-    'Chi_squared_test',
-    'Student_t-test',
-    'ANOVA',
+    'Chi-squared_test',
+    'Analysis_of_variance',
     'Factorial_experiment',
-    'Causal_statistical_inference',
+    'Causal_inference',
     'Multivariate_statistics',
-    'Non-parametric_statistics'
+    'Nonparametric_statistics'
 ]
+
 wiki_api = WikipediaAPI()
 processor = BaseTextProcessor()
 INGEST = True
+print(len(data_science_articles), len(set(data_science_articles)))
 
-if INGEST and len(data_science_articles) == len(set(data_science_articles)):
-    counter = 0
+if INGEST:
+    unique_id = -2
     emb_tbl = EmbeddingModelTable(rds_dbname, rds_user, rds_password, rds_host, rds_port)
-    for TITLE in tqdm(data_science_articles, desc='Progress'):
+    for TITLE in tqdm(set(data_science_articles), desc='Progress'):
         title, page_id, final_text = wiki_api.fetch_article_data(TITLE)
         if page_id == -1:
-            counter += 1
-            print(f'title not found {title}, Counter: {counter}')
+            page_id = unique_id
+            unique_id -= 1
         article = Article(title=title, id=page_id, text=final_text, text_processor=processor)
         article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
         total_text = ""
         for content in article.text_dict.values():
             total_text += content
-        # text is stored in total_text, title in article.title, and article.id
         cleaned_text = re.sub(r'[\n\t]', ' ', total_text)
         emb_tbl.add_record(article.id, cleaned_text, article.title)
     emb_tbl.close_connection()
