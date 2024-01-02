@@ -1,5 +1,7 @@
 # DSSE ReadMe
-### Motivation: Build large scale IR and RAG system using wikipedia as a case study. ideally, this would be extended for Law. 
+### Motivation: Build large scale IR and RAG system using wikipedia as a case study focused on Data Science. This may be used for all levels of Data Scientists to learn more about the core topics of Data Science with relevant citations and responses from an foundational model. Especially interested in developing deep learning models with good enough performance on the smallest amount of compute possible. 
+### Current Stage
+- Annotating Data for custom NER model. This will be important for query filtering and network visualization.
 ## Core Functionality by Feature
 1. Search 
     - Develop an IR system to return relevant documents based on tags, input query, etc.  
