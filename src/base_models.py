@@ -337,7 +337,7 @@ class Article:
         self.metadata_dict = metadata_dict
 
     def process_metadata_labeling(self, text_processor):
-        json_record = text_processor.build_json(self, test_pattern)
+        json_record = text_processor.build_metadata_json(self, test_pattern)
         return json_record
 
     def show_headings(self, text_processor):

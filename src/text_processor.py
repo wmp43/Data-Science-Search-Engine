@@ -199,7 +199,7 @@ class BaseTextProcessor(TextProcessor):
             metadata_dict[heading] = {key: list(value) for key, value in sub_metadata_dict.items()}
         return metadata_dict
 
-    def build_json(self, article: Article, patterns: list):
+    def build_metadata_json(self, article: Article, patterns: list):
         concatenated_text = ' '.join([section_text for section_text in article.text_dict.values()])
         concatenated_text = re.sub(r'[\n\t]', ' ', concatenated_text)
 
