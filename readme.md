@@ -1,5 +1,5 @@
 # DSSE ReadMe
-### Motivation: Build large scale NLP/IR system using wikipedia as a case study
+### Motivation: Build large scale IR and RAG system using wikipedia as a case study. ideally, this would be extended for Law. 
 ## Core Functionality by Feature
 1. Search 
     - Develop an IR system to return relevant documents based on tags, input query, etc.  
