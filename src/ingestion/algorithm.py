@@ -1,7 +1,7 @@
 # File for the massive for loop that is comprehensive data ingestion from wikipedia
 # Implementations of TextProcessingStrategy can be CleanAndTokenizeStrategy, etc.
 # Much of this algo is current garbage.
-from src.models import WikipediaAPI, Category, Article, BaseTextProcessor
+from src.base_models import WikipediaAPI, Category, Article, BaseTextProcessor
 from collections import deque
 import uuid
 # I wish there was a dynamic way to visualize this working, like

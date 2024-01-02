@@ -26,7 +26,7 @@ class RelationalDB(ABC):
         pass
 
 
-class PgVector(RelationalDB):
+class VectorTable(RelationalDB):
     """
     Extension of abstract base class specifically for pgvetor on aws rds
 
@@ -68,7 +68,7 @@ class PgVector(RelationalDB):
         pass
 
 
-class EmbeddingModelTable:
+class ArticlesTable(RelationalDB):
     def __init__(self, dbname, user, password, host, port):
         self.dbname = dbname
         self.user = user

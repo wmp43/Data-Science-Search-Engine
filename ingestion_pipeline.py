@@ -2,10 +2,36 @@
 This is a pipeline from Article instantiation to vector embedding
 """
 from src.text_processor import BaseTextProcessor
-from src.models import Article
+from src.base_models import Article
 from src.api import WikipediaAPI
 from spacy.lang.en import English
 from config import test_pattern
+
+
+"""
+Outline
+1. Random helpers to sensure the methods are working. Quick and dirty sub for legit tests 
+Purpose
+1. To Run through the process acquiring data, processing it, storing it
+
+"""
+def have_same_keys_and_length(dict1, dict2):
+    # Check if the length of both dictionaries is the same
+    if len(dict1) != len(dict2):
+        return False
+
+    # Check if all keys in dict1 are in dict2
+    for key in dict1:
+        if key not in dict2:
+            return False
+
+    # Optionally, check if all keys in dict2 are in dict1 as well
+    for key in dict2:
+        if key not in dict1:
+            return False
+
+    return True
+
 
 NER = True
 
@@ -42,15 +68,15 @@ if INGESTION:
     processor = BaseTextProcessor()
 
     title, page_id, final_text = wiki_api.fetch_article_data(TITLE)
-    print(final_text)
-
     article = Article(title=TITLE, id=page_id, text=final_text, text_processor=processor)
-
     article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
-    article.print_attribute_types()
     article.process_embedding_pipeline(processor)
+    # first_two_pairs_embed = list(article.embedding_dict.items())[:2]
+    print(have_same_keys_and_length(article.text_dict, article.embedding_dict))
 
-    print(article.embedding_dict)
+    # Print the first two key-value pairs
+    # for key, value in first_two_pairs:
+    #     print(f"{key}: {value}")
     # for k, v in article.embedding_dict.items():
     #     print(f'embeddings: {type(v[0]), v[0].shape}')
     # print(len(article.text_dict["Introduction_1"]) + len(article.text_dict["Introduction_0"]) )

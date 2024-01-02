@@ -1,9 +1,9 @@
 """
 This file will upsert data in a new rds table for developing the embedding model
 """
-from src.models import Article
+from src.base_models import Article
 from src.api import WikipediaAPI
-from src.relational import EmbeddingModelTable
+from src.relational import ArticlesTable
 from src.text_processor import BaseTextProcessor
 from config import (rds_host, rds_dbname, rds_user, rds_password, rds_port)
 from tqdm import tqdm
@@ -191,7 +191,7 @@ INGEST = True
 
 if INGEST:
     unique_id = -2
-    emb_tbl = EmbeddingModelTable(rds_dbname, rds_user, rds_password, rds_host, rds_port)
+    emb_tbl = ArticlesTable(rds_dbname, rds_user, rds_password, rds_host, rds_port)
     for TITLE in tqdm(set(data_science_articles), desc='Progress'):
         title, page_id, final_text = wiki_api.fetch_article_data(TITLE)
         if page_id == -1:

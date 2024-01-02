@@ -1,7 +1,7 @@
 # src.text_processor.py
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Optional, Tuple
-from src.models import Article, Category
+from src.base_models import Article, Category
 import re
 import os
 import requests
@@ -169,11 +169,8 @@ class BaseTextProcessor(TextProcessor):
 
     def build_embeddings(self, article: Article) -> Dict:
         # URL of your Flask API endpoint
-        api_url = "http://127.0.0.1:5000/build_embeddings_api"
-
-        json_article = article.json_serialize()
-        payload = {'article': json_article}
-
+        api_url = "http://127.0.0.1:5000/embeddings_api"
+        payload = {'article': article.text_dict}
         # Make the POST request
         response = requests.post(api_url, json=payload)
 
@@ -183,7 +180,6 @@ class BaseTextProcessor(TextProcessor):
             return embed_dict
         else:
             print("Error in Embedding Encoding API call:", response.status_code, response.text)
-            return None
 
     def build_metadata(self, article: Article, **kwargs):
         metadata_dict = {}
