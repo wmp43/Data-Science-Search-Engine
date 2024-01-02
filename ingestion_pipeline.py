@@ -15,47 +15,10 @@ Purpose
 1. To Run through the process acquiring data, processing it, storing it
 
 """
-def have_same_keys_and_length(dict1, dict2):
-    # Check if the length of both dictionaries is the same
-    if len(dict1) != len(dict2):
-        return False
-
-    # Check if all keys in dict1 are in dict2
-    for key in dict1:
-        if key not in dict2:
-            return False
-
-    # Optionally, check if all keys in dict2 are in dict1 as well
-    for key in dict2:
-        if key not in dict1:
-            return False
-
-    return True
-
-
-NER = True
-
-def ner(article):
-    metadata_dict = {}
-    nlp = English()
-    ruler = nlp.add_pipe("entity_ruler")
-    ruler.add_patterns(test_pattern)
-
-    for heading, content in article.text_dict.items():
-        sub_metadata_dict = {}
-        doc = nlp(content)
-        for ent in doc.ents:
-            if ent.label_ in sub_metadata_dict:
-                sub_metadata_dict[ent.label_].add(ent.text)
-            else:
-                sub_metadata_dict[ent.label_] = {ent.text}
-        # Convert sets to lists for final output
-        metadata_dict[heading] = {key: list(value) for key, value in sub_metadata_dict.items()}
-    article.metadata_dict = metadata_dict
-    print(metadata_dict)
-    return None
 
 INGESTION = True
+
+
 if INGESTION:
     TITLE = 'Machine_learning'
     SECTIONS_TO_IGNORE = [
@@ -71,8 +34,6 @@ if INGESTION:
     article = Article(title=TITLE, id=page_id, text=final_text, text_processor=processor)
     article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
     article.process_embedding_pipeline(processor)
-    # first_two_pairs_embed = list(article.embedding_dict.items())[:2]
-    print(have_same_keys_and_length(article.text_dict, article.embedding_dict))
 
     # Print the first two key-value pairs
     # for key, value in first_two_pairs:
@@ -130,3 +91,41 @@ if INGESTION:
 # print(article.text)
 # print(article.text_dict.keys(),'\n\n\n')
 # print(article.text_dict['Introduction'])
+
+# def have_same_keys_and_length(dict1, dict2):
+#     # Check if the length of both dictionaries is the same
+#     if len(dict1) != len(dict2):
+#         return False
+#
+#     # Check if all keys in dict1 are in dict2
+#     for key in dict1:
+#         if key not in dict2:
+#             return False
+#
+#     # Optionally, check if all keys in dict2 are in dict1 as well
+#     for key in dict2:
+#         if key not in dict1:
+#             return False
+#
+#     return True
+
+
+# def ner(article: Article):
+#     metadata_dict = {}
+#     nlp = English()
+#     ruler = nlp.add_pipe("entity_ruler")
+#     ruler.add_patterns(test_pattern)
+#
+#     for heading, content in article.text_dict.items():
+#         sub_metadata_dict = {}
+#         doc = nlp(content)
+#         for ent in doc.ents:
+#             if ent.label_ in sub_metadata_dict:
+#                 sub_metadata_dict[ent.label_].add(ent.text)
+#             else:
+#                 sub_metadata_dict[ent.label_] = {ent.text}
+#         # Convert sets to lists for final output
+#         metadata_dict[heading] = {key: list(value) for key, value in sub_metadata_dict.items()}
+#     article.metadata_dict = metadata_dict
+#     print(metadata_dict)
+#     return None
