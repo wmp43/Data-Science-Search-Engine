@@ -324,18 +324,21 @@ class Article:
         self.embedding_dict = embed_dict
         return self
 
-    # todo: uncomment this. Or find a way to suppress spaCy warnings they are so annoying
-    # def process_metadata_pipeline(self, text_processor):
-    #     """
-    #     December 19th
-    #     https://spacy.io/usage/rule-based-matching
-    #     This method should build a metadata object for each embedded section.
-    #     By extension I guess it should also support
-    #     :param text_processor: TextProcessor object to build metadata
-    #     :return: self
-    #     """
-    #     metadata_dict = text_processor.build_metadata(self, pattern=test_pattern)
-    #     self.metadata_dict = metadata_dict
+    def process_metadata_pipeline(self, text_processor):
+        """
+        December 19th
+        https://spacy.io/usage/rule-based-matching
+        This method should build a metadata object for each embedded section.
+        By extension I guess it should also support
+        :param text_processor: TextProcessor object to build metadata
+        :return: self
+        """
+        metadata_dict = text_processor.build_metadata(self, pattern=test_pattern)
+        self.metadata_dict = metadata_dict
+
+    def process_metadata_labeling(self, text_processor):
+        json_record = text_processor.build_json(self, test_pattern)
+        return json_record
 
     def show_headings(self, text_processor):
         text_processor.extract_headings(self)

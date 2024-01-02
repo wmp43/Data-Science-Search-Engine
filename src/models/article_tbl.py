@@ -7,7 +7,7 @@ from src.relational import EmbeddingModelTable
 from src.text_processor import BaseTextProcessor
 from config import (rds_host, rds_dbname, rds_user, rds_password, rds_port)
 from tqdm import tqdm
-import re
+import json
 """
 Ingestion pipeline for full article and text data
 1. Define List of Articles to Snag
@@ -25,6 +25,8 @@ SECTIONS_TO_IGNORE = [
     "References and sources", "References and notes"]
 data_science_articles = [
     'Data_science',
+    'Calculus_on_Euclidean_space',
+    'Vector_calculus',
     'Statistic',
     'Statistics',
     'Bayesian_statistics',
@@ -78,12 +80,16 @@ data_science_articles = [
     'Stochastic_gradient_descent',
     'Principal_component_analysis',
     'Factor_analysis',
+    'Matplotlib',
+    'NumPy',
+    'PyTorch',
     'Categorical_variable',
     'Numerical_analysis',
     'Monte_Carlo_method',
     'Simulated_annealing',
     'Computational_complexity_theory',
     'Algorithm',
+    'Critical_path_method',
     'Data_structure',
     'Distributed_computing',
     'Parallel_computing',
@@ -130,7 +136,6 @@ data_science_articles = [
     'Convolutional_neural_network',
     'Decision_boundary',
     'Dimensionality_reduction',
-    'Ensemble_methods',
     'Cluster_analysis',
     'Feature_selection',
     'Generative_adversarial_network',
@@ -142,10 +147,17 @@ data_science_articles = [
     'Overfitting',
     'Precision_and_recall',
     'Recurrent_neural_network',
-    'Regularization',
+    'Regularization_(mathematics)',
     'Transfer_learning',
     'Training,_validation,_and_test_data_sets',
     'XGBoost',
+    'Ilya_Sutskever',
+    'Harvard',
+    'Cornell',
+"OpenAI", "Massachusetts_Institute_of_Technology", 'Google Brain',
+    'Andrew_Ng',
+    'Scikit-learn',
+    'Stanford'
     'Probability_theory',
     'Probability_distribution',
     'Conditional_probability',
@@ -163,13 +175,17 @@ data_science_articles = [
     'Factorial_experiment',
     'Causal_inference',
     'Multivariate_statistics',
-    'Nonparametric_statistics'
+    'Nonparametric_statistics',
+    'K-means_clustering',
+    'Vector_quantization',
+    'Euclidean_distance'
+
 ]
 
 wiki_api = WikipediaAPI()
 processor = BaseTextProcessor()
 INGEST = True
-print(len(data_science_articles), len(set(data_science_articles)))
+
 
 if INGEST:
     unique_id = -2
@@ -181,11 +197,11 @@ if INGEST:
             unique_id -= 1
         article = Article(title=title, id=page_id, text=final_text, text_processor=processor)
         article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
-        total_text = ""
-        for content in article.text_dict.values():
-            total_text += content
-        cleaned_text = re.sub(r'[\n\t]', ' ', total_text)
-        emb_tbl.add_record(article.id, cleaned_text, article.title)
+        json_record = article.process_metadata_labeling(processor)
+        # total_text = ""
+        # for (key, text), metadata in zip(article.text_dict.items(), article.metadata_dict.values()):
+        #     print(metadata, type(metadata))
+        #     total_text += text
+        # cleaned_text = re.sub(r'[\n\t]', ' ', total_text)
+        emb_tbl.add_record(json_record['id'], json_record['text'], json_record['title'], json.dumps(json_record['labels']))
     emb_tbl.close_connection()
-
-

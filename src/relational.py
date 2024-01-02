@@ -90,7 +90,7 @@ class EmbeddingModelTable:
         except psycopg2.Error as e:
             print(f"Unable to connect to the database: {e}")
 
-    def add_record(self, id, text, title):
+    def add_record(self, id, text, title, label):
         """
         :param id: Id of the record
         :param text: Resultant Text of the record
@@ -98,7 +98,7 @@ class EmbeddingModelTable:
         :return: None i gues
         """
         with self.conn.cursor() as cur:
-            cur.execute("INSERT INTO embedding_model_dev (id, text, title) VALUES (%s, %s, %s)", (id, text, title))
+            cur.execute("INSERT INTO articles (id, text, title, label) VALUES (%s, %s, %s, %s)", (id, text, title, label))
             self.conn.commit()
 
     def get_record(self, title):
@@ -107,19 +107,19 @@ class EmbeddingModelTable:
         :return: Record with the title
         """
         with self.conn.cursor() as cur:
-            cur.execute("SELECT * FROM embedding_model_dev WHERE title = %s", (title,))
+            cur.execute("SELECT * FROM articles WHERE title = %s", (title,))
             return cur.fetchone()
 
     def print_sample_data(self):
         with self.conn.cursor() as cur:
-            cur.execute("SELECT * FROM embedding_model_dev")
+            cur.execute("SELECT * FROM articles")
             records = cur.fetchall()
             for record in records:
                 print(record)
 
     def get_all_data(self):
         with self.conn.cursor() as cur:
-            cur.execute("SELECT * FROM embedding_model_dev")
+            cur.execute("SELECT * FROM articles")
             columns = [desc[0] for desc in cur.description]
             print(columns)
             data = [dict(zip(columns, row)) for row in cur.fetchall()]

@@ -202,3 +202,24 @@ class BaseTextProcessor(TextProcessor):
             # Convert sets to lists for final output
             metadata_dict[heading] = {key: list(value) for key, value in sub_metadata_dict.items()}
         return metadata_dict
+
+    def build_json(self, article: Article, patterns: list):
+        concatenated_text = ' '.join([section_text for section_text in article.text_dict.values()])
+        concatenated_text = re.sub(r'[\n\t]', ' ', concatenated_text)
+
+        annotations = []
+        for pattern in patterns:
+            label = pattern['label']
+            term = pattern['pattern']
+            for match in re.finditer(re.escape(term), concatenated_text, re.IGNORECASE):
+                start, end = match.span()
+                annotations.append([start, end, label])
+
+        doccano_json = {
+            "id": article.id,
+            'title': article.title,
+            "text": concatenated_text,
+            "labels": annotations
+        }
+
+        return doccano_json
