@@ -7,3 +7,4 @@ dsse
 .ipynb_checkpoints
 config.py
 text_cleaning_tests/
+/src/models/doccano_data.jsonl

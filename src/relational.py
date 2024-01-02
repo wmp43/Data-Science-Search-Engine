@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import psycopg2
 import pandas as pd
+import json
 
 
 class RelationalDB(ABC):
@@ -117,13 +118,27 @@ class EmbeddingModelTable:
             for record in records:
                 print(record)
 
-    def get_all_data(self):
+    def get_all_data_pd(self):
         with self.conn.cursor() as cur:
             cur.execute("SELECT * FROM articles")
             columns = [desc[0] for desc in cur.description]
             print(columns)
             data = [dict(zip(columns, row)) for row in cur.fetchall()]
         return pd.DataFrame(data)
+
+    def get_all_data_json(self):
+        df = self.get_all_data_pd()
+        json_data = []
+        for _, row in df.iterrows():
+            text = row['text']
+            labels = json.loads(row['label']) if isinstance(row['label'], str) else row['label']
+            json_obj = {
+                "text": text,
+                "label": labels
+            }
+            json_data.append(json_obj)
+
+        return json_data
 
     def close_connection(self):
         if self.conn is not None:

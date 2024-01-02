@@ -7,6 +7,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from config import (rds_host, rds_dbname, rds_user, rds_password, rds_port)
 from src.relational import EmbeddingModelTable
+import json
 
 """
 Loading and Cleaning of DataFrame
@@ -25,8 +26,16 @@ DATA = True
 
 if DATA:
     emb_df = EmbeddingModelTable(rds_dbname, rds_user, rds_password, rds_host, rds_port)
-    text_df = emb_df.get_all_data()
+    json_obj = emb_df.get_all_data_json()
     emb_df.close_connection()
+    with open('doccano_data.jsonl', 'w', encoding='utf-8') as file:
+        for item in json_obj:
+            item['text'] = item['text'].replace('\\', '')
+
+            json_string = json.dumps(item, ensure_ascii=False)
+            file.write(json_string + '\n')
+
+    print("File 'doccano_data.jsonl' has been created.")
 
 # torch.manual_seed(1)
 #
