@@ -118,7 +118,7 @@ if BUILD_SPACY:
             
             I guess my span metadata_pipeline doesn't work ideally. 
             I suppose we can rebuild this just from text articles table
-            Also should include
+            Also should include standard tags that are built from classical ner from spaCy
             """
         doc.ents = ents
         db.add(doc)
