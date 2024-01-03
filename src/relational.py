@@ -68,7 +68,7 @@ class VectorTable(RelationalDB):
         pass
 
 
-class ArticlesTable(RelationalDB):
+class ArticlesTable:
     def __init__(self, dbname, user, password, host, port):
         self.dbname = dbname
         self.user = user
