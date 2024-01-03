@@ -116,7 +116,9 @@ if BUILD_SPACY:
             File "spacy/tokens/doc.pyx", line 2005, in spacy.tokens.doc.get_entity_info
             TypeError: object of type 'NoneType' has no len()
             
-            I guess my span metadata_pipeline doesn't work ideally.
+            I guess my span metadata_pipeline doesn't work ideally. 
+            I suppose we can rebuild this just from text articles table
+            Also should include
             """
         doc.ents = ents
         db.add(doc)
