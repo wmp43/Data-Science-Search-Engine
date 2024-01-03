@@ -1,257 +1,40 @@
-"""
-This file will upsert data in a new rds table for developing the embedding model
-"""
-from src.base_models import Article
+# Imports
 from src.api import WikipediaAPI
-from src.relational import ArticlesTable
-from src.text_processor import BaseTextProcessor
+import pandas as pd
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
 from config import (rds_host, rds_dbname, rds_user, rds_password, rds_port)
-from tqdm import tqdm
+from src.relational import ArticlesTable
 import json
+
+
 """
-Ingestion pipeline for full article and text data
-1. Define List of Articles to Snag
-2. Call API with title
-3. Instantiate Article with returned items
-4. Clean Text
-5. Store in DB
-6. Hope it works
+This is the file to develop a custom ner model to attach to our model_apis in order to build metadata
+for the entire corpus.
+
+Noetica AI is hiring a NLP Engineer - https://www.useparallel.com/noeticaai/careers/657741ab0222ded56f973340
+CTO's thesis can actually be used here - https://academiccommons.columbia.edu/doi/10.7916/znbv-rz34
+See Chapter 3: Partially Supervised Named Entity Recognition via the Expected Entity Ratio
 """
 
-SECTIONS_TO_IGNORE = ["References", "External links", "Further reading", "Footnotes", "Bibliography", "Sources",
-    "Citations",
-    "Literature", "Footnotes", "Notes and references", "Photo gallery", "Works cited", "Photos", "Gallery", "Notes",
-    "References and sources", "References and notes"]
-data_science_articles = [
-    'Data_science',
-    'Calculus_on_Euclidean_space',
-    'Vector_calculus',
-    'Statistic',
-    'Statistics',
-    'Bayesian_statistics',
-    'Linear_algebra',
-    'Calculus',
-    'Discrete_mathematics',
-    'Python_(programming_language)',
-    'Data_mining',
-    'Data_and_information_visualization',
-    'Machine_learning',
-    'Deep_learning',
-    'Artificial_neural_network',
-    'Support_vector_machine',
-    'Random_forest',
-    'Natural_language_processing',
-    'Computer_vision',
-    'Reinforcement_learning',
-    'Function_(mathematics)',
-    'Maximum_a_posteriori_estimation',
-    'Continuous_or_discrete_variable',
-    'Supervised_learning',
-    'Activation_function',
-    'Named-entity_recognition',
-    'Posterior_probability',
-    'Unsupervised_learning',
-    'Weak_supervision',
-    'Feature_engineering',
-    'Model_selection',
-    'Cross-validation_(statistics)',
-    'Bootstrapping_(statistics)',
-    'Statistical_hypothesis_testing',
-    'Regression_analysis',
-    'Time_series',
-    'Dimensionality_reduction',
-    'Cluster_analysis',
-    'Big_data',
-    'Data_cleansing',
-    'Data_integration',
-    'Predictive_modelling',
-    'Decision_tree_learning',
-    'Decision_theory',
-    'Association_rule_learning',
-    'Ensemble_learning',
-    'Gradient_boosting',
-    'Neural_network_software',
-    'Neural_network',
-    'Evolutionary_algorithm',
-    'Genetic_programming',
-    'Fuzzy_logic',
-    'Information_theory',
-    'Entropy_(information_theory)',
-    'Kullback–Leibler_divergence',
-    'Markov_decision_process',
-    'Graph_theory',
-    'Mathematical_optimization',
-    'Convex_optimization',
-    'Stochastic_gradient_descent',
-    'Principal_component_analysis',
-    'Factor_analysis',
-    'Matplotlib',
-    'NumPy',
-    'PyTorch',
-    'Categorical_variable',
-    'Numerical_analysis',
-    'Monte_Carlo_method',
-    'Simulated_annealing',
-    'Computational_complexity_theory',
-    'Algorithm',
-    'Critical_path_method',
-    'Data_structure',
-    'Distributed_computing',
-    'Parallel_computing',
-    'Quantum_computing',
-    'High-performance_computing',
-    'Computational_science',
-    'Data_security',
-    'Blockchain',
-    'Edge_computing',
-    'Bioinformatics',
-    'Computational_biology',
-    'Computational_neuroscience',
-    'Robotics',
-    'Quantum_machine_learning',
-    'Causal_inference',
-    'Design_of_experiments',
-    'Statistical_learning_theory',
-    'Algorithmic_bias',
-    'Computational_learning_theory',
-    'Data_warehouse',
-    'Deep_reinforcement_learning',
-    'Ethics_of_artificial_intelligence',
-    'Feature_learning',
-    'Game_theory',
-    'Graphical_model',
-    'Knowledge_representation_and_reasoning',
-    'Learning_to_rank',
-    'Machine_perception',
-    'Machine_translation',
-    'Multi-agent_system',
-    'Multi-task_learning',
-    'Pattern_recognition',
-    'Predictive_analytics',
-    'Recommender_system',
-    'Speech_recognition',
-    'Statistical_classification',
-    'Structured_prediction',
-    'Text_mining',
-    'Anomaly_detection',
-    'Autoencoder',
-    'Bias–variance_tradeoff',
-    'Nearest_neighbor_search',
-    'Clustering_coefficient',
-    'Convolutional_neural_network',
-    'Decision_boundary',
-    'Dimensionality_reduction',
-    'Cluster_analysis',
-    'Feature_selection',
-    'Generative_adversarial_network',
-    'Hyperparameter_optimization',
-    'Loss_function',
-    'Similarity_learning',
-    'Large_language_model',
-    'Curve_fitting',
-    'Overfitting',
-    'Precision_and_recall',
-    'Recurrent_neural_network',
-    'Regularization_(mathematics)',
-    'Transfer_learning',
-    'Training,_validation,_and_test_data_sets',
-    'XGBoost',
-    'Ilya_Sutskever',
-    'Harvard',
-    'Cornell',
-    "OpenAI",
-    "Massachusetts_Institute_of_Technology",
-    'Google Brain',
-    'Andrew_Ng',
-    'Scikit-learn',
-    'Stanford',
-    'Probability_theory',
-    'Probability_distribution',
-    'Conditional_probability',
-    "Bayes'_theorem",
-    'Independence_(probability_theory)',
-    'Random_variable',
-    'Central_limit_theorem',
-    'Kolmogorov–Smirnov_test',
-    'Variance',
-    'A/B_testing',
-    'Standard_deviation',
-    'Covariance',
-    'Correlation',
-    'Sampling_distribution',
-    'Chi-squared_test',
-    'Conference_on_Neural_Information_Processing_Systems',
-    'Two-sample_hypothesis_testing',
-    'Probability_space',
-    'Analysis_of_variance',
-    'Factorial_experiment',
-    'Causal_inference',
-    'Multivariate_statistics',
-    'Nonparametric_statistics',
-    'K-means_clustering',
-    'Vector_quantization',
-    'Euclidean_distance',
-    'Transformer_(machine_learning_model)',
-    'Long_short-term_memory',
-    'Hidden_Markov_model',
-    'Vanishing_gradient_problem',
-    'Stochastic_gradient_descent',
-    'M-estimator',
-    'Least_squares',
-    'Ordinary_least_squares',
-    'Linear_least_squares',
-    'Numerical_methods_for_linear_least_squares',
-    'Projection_(linear_algebra)',
-    'Hugging_Face',
-    'Natural_language_processing',
-    'Maximum_likelihood_estimation',
-    'Likelihood_function',
-    'Joint_probability_distribution',
-    'Word_n-gram_language_model',
-    'Bag-of-words_model',
-    'Document-term_matrix',
-    'Multivariate_statistics',
-    'Convex_function',
-    'Multivariate_normal_distribution',
-    'Linear_combination',
-    'Conditional_probability_distribution',
-    'Lexical_analysis',
-    'Maximum_a_posteriori_estimation',
-    'Integer_programming',
-    'Nonlinear_programming',
-    'Moment_(mathematics)',
-    'Frequentist_inference',
-    'Statistical_inference',
-    'Frequentist_probability',
-    'Expectation–maximization_algorithm',
-    'Poisson_distribution',
-    'Scala_(programming_language)',
-    'Central_moment',
-    'Exponential_distribution',
-    'Skewness',
-    'Kurtosis'
-]
 
-wiki_api = WikipediaAPI()
-processor = BaseTextProcessor()
-INGEST = True
+# Helpers:
+def dataframe_to_spacy_format(df):
+    training_data = []
+    for _, row in df.iterrows():
+        entities = {'entities': row['label']}
+        training_data.append((row['text'], entities))
+    return training_data
 
 
-if INGEST:
-    unique_id = -2
-    emb_tbl = ArticlesTable(rds_dbname, rds_user, rds_password, rds_host, rds_port)
-    for TITLE in tqdm(set(data_science_articles), desc='Progress'):
-        title, page_id, final_text = wiki_api.fetch_article_data(TITLE)
-        if page_id == -1:
-            page_id = unique_id
-            unique_id -= 1
-        article = Article(title=title, id=page_id, text=final_text, text_processor=processor)
-        article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
-        json_record = article.process_metadata_labeling(processor)
-        # total_text = ""
-        # for (key, text), metadata in zip(article.text_dict.items(), article.metadata_dict.values()):
-        #     print(metadata, type(metadata))
-        #     total_text += text
-        # cleaned_text = re.sub(r'[\n\t]', ' ', total_text)
-        emb_tbl.add_record(json_record['id'], json_record['text'], json_record['title'], json.dumps(json_record['labels']))
-    emb_tbl.close_connection()
+"""
+Precprocess is to build a dataset from our articles table that matches the required format
+"""
+PREPROCESS = True
+if PREPROCESS:
+    emb_df = ArticlesTable(rds_dbname, rds_user, rds_password, rds_host, rds_port)
+    art_df = emb_df.get_all_data_pd()
+    spacy_data = dataframe_to_spacy_format(art_df)
+    print(spacy_data[0])

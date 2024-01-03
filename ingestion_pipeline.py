@@ -1,5 +1,6 @@
 """
-This is a pipeline from Article instantiation to vector embedding
+This is a pipeline from Wikipedia API to vector embedding
+Essentially the entire ingestion process to build vector db
 """
 from src.text_processor import BaseTextProcessor
 from src.base_models import Article
