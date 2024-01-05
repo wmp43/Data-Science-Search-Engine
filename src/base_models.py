@@ -5,11 +5,8 @@ from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from typing import List, Dict, Any, Optional, Tuple
-from config import ner_pattern
-from openai import OpenAI
+from config import ner_pattern, non_fuzzy_list
 from pydantic import BaseModel
-
-
 
 
 """
@@ -180,8 +177,12 @@ class Article:
         self.metadata_dict = metadata_dict
 
     def process_metadata_labeling(self, text_processor):
-        json_record = text_processor.build_metadata_json(self, ner_pattern)
-        return json_record
+        """
+        :param text_processor: Base Text Processor
+        :return: Builds the entities for metadata labeling for ner
+        """
+        entities = text_processor.build_training_metadata(self, ner_pattern, non_fuzzy_list)
+        return entities
 
     def show_headings(self, text_processor):
         text_processor.extract_headings(self)

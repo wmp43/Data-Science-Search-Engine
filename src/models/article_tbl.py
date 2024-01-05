@@ -47,6 +47,7 @@ if BUILD_ARTICLE_LIST:
     # May not be necessary right now
     print('Implement Build Article List')
 
+test_arts = ['data_structure', 'engineering', 'Statistical_hypothesis_testing']
 
 # Data ingestion + tagging creation !!!!!!
 wiki_api = WikipediaAPI()
@@ -62,17 +63,15 @@ if INGEST:
             unique_id -= 1
         article = Article(title=title, id=page_id, text=final_text, text_processor=processor)
         article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
-        article.process_metadata_pipeline(processor)
-        json_record = article.process_metadata_labeling(processor)
+        concatenated_text, entities = article.process_metadata_labeling(processor)
+        print(TITLE, entities[:3], concatenated_text[:200])
         # total_text = ""
         # for (key, text), metadata in zip(article.text_dict.items(), article.metadata_dict.values()):
         #     print(metadata, type(metadata))
         #     total_text += text
         # cleaned_text = re.sub(r'[\n\t]', ' ', total_text)
         # Should maybe consider creating column for train or test...... with random chance of testing being .3
-
-        emb_tbl.add_record(json_record['id'], json_record['text'], json_record['title'],
-                           json.dumps(json_record['labels']))
+        emb_tbl.add_record(article.id, concatenated_text, article.title, json.dumps(entities))
     emb_tbl.close_connection()
 
 """
@@ -122,23 +121,3 @@ if BUILD_SPACY_DATA:
             db_test.add(doc)
     db_train.to_disk("./train.spacy")
     db_test.to_disk("./test.spacy")
-
-
-def convert_fuzzy_match(patterns: List[Dict]) -> List[Dict]:
-    spacy_patterns = []
-    for entry in patterns:
-        label = entry['label']
-        if isinstance(entry['pattern'], str):
-            token_patterns = [{'LOWER': {'FUZZY': word.lower()}} for word in entry['pattern'].split()]
-        else:
-            token_patterns = [{'LOWER': {'FUZZY': token['LOWER']}} for token in entry['pattern']]
-        spacy_patterns.append({'label': label, 'pattern': token_patterns})
-    return spacy_patterns
-
-
-TEST = False
-if TEST:
-    data = convert_fuzzy_match(test_pattern)
-    print(len(data))
-    for i in range(352):
-        if i % 8 == 0: print(data[i])

@@ -12,18 +12,22 @@ from langchain.text_splitter import (TokenTextSplitter,
                                      CharacterTextSplitter,
                                      SpacyTextSplitter)
 
-from config import ner_pattern, entity_ruler_config
+from config import ner_pattern, entity_ruler_config, non_fuzzy_list
 from spacy.lang.en import English
 
 
-def convert_fuzzy_match(patterns: List[Dict]) -> List[Dict]:
+def convert_fuzzy_match(patterns: List[Dict], non_fuzzy_list: List[str]) -> List[Dict]:
     spacy_patterns = []
     for entry in patterns:
         label = entry['label']
+        pattern = entry['pattern']
+
         if isinstance(entry['pattern'], str):
-            token_patterns = [{'LOWER': {'FUZZY': word.lower()}} for word in entry['pattern'].split()]
+            if pattern in non_fuzzy_list: token_patterns = [{'LOWER': word.lower()} for word in entry['pattern'].split()]
+            else: token_patterns = [{'LOWER': {'FUZZY1': word.lower()}} for word in entry['pattern'].split()]
         else:
-            token_patterns = [{'LOWER': {'FUZZY': token['LOWER']}} for token in entry['pattern']]
+            if pattern in non_fuzzy_list: token_patterns = [{'LOWER': word.lower()} for word in entry['pattern'].split()]
+            else: token_patterns = [{'LOWER': {'FUZZY1': token['LOWER']}} for token in entry['pattern']]
         spacy_patterns.append({'label': label, 'pattern': token_patterns})
     return spacy_patterns
 
@@ -43,7 +47,7 @@ class TextProcessor(ABC):
         pass
 
     @abstractmethod
-    def build_metadata(self, article):
+    def build_training_metadata(self, article, pattern):
         pass
 
     @abstractmethod
@@ -58,9 +62,9 @@ class TextProcessor(ABC):
     def chunk_text_dict(self, section_dict):
         pass
 
-    # @abstractmethod
-    # def build_section_dict(self, article):
-    #     pass
+    @abstractmethod
+    def build_metadata_from_model(self, article, model):
+         pass
 
 
 class BaseTextProcessor(TextProcessor):
@@ -193,13 +197,39 @@ class BaseTextProcessor(TextProcessor):
         else:
             print("Error in Embedding Encoding API call:", response.status_code, response.text)
 
-    def build_metadata_from_model(self, article: Article, pattern=ner_pattern):
+    def build_training_metadata(self, article: Article, pattern=ner_pattern, non_fuzzy=non_fuzzy_list):
         """
         Method: Matches patterns to text and builds the return data structure.
+        :param non_fuzzy_list:
         :param article: Article Object w/ attribute text_dict. {heading_0: text:str, heading_1: text:str}
         :param  pattern: List[Dict] = [
             {"label": "Probability & Statistics", "pattern": "normal distribution"},
             {"label": "Probability & Statistics", "pattern": "continuous distribution"}]
+        :return List as follows:
+        data = [
+        ("This is text with important information",[(start_span, end_span, label)]),
+        ("important information and I promise it is important",[(start_span, end_span, label), (start_span, end_span, label)])
+        ]
+        """
+        concatenated_text = ' '.join([section_text for section_text in article.text_dict.values()])
+
+        test_pattern_fuzzy = convert_fuzzy_match(pattern, non_fuzzy)
+        nlp = English()
+
+        # Instead of creating a component and then adding it, directly add the component by its name
+        ruler = nlp.add_pipe("entity_ruler", config=entity_ruler_config)
+        ruler.add_patterns(test_pattern_fuzzy)
+
+        # Remove the redundant `nlp.add_pipe(ruler)` line
+        doc = nlp(concatenated_text)
+        entities = [(ent.start_char, ent.end_char, ent.label_, ent.text) for ent in doc.ents]
+        return concatenated_text, entities
+
+    def build_metadata_from_model(self, article: Article, model):
+        """
+        Method: Matches patterns to text and builds the return data structure.
+        :param article: Article Object w/ attribute text_dict. {heading_0: text:str, heading_1: text:str}
+        :param  model: The loaded fine-tuned model
         :return List as follows:
         data = [
         ("This is text with important information",[(start_span, end_span, label)]),
@@ -225,32 +255,3 @@ class BaseTextProcessor(TextProcessor):
         """This section will be used to call the ner endpoint when model is developed. The model will be
         called and returned in a similar data structure to maintain record integrity to the above loop"""
         pass
-
-    def build_training_metadata(self, article: Article, pattern=ner_pattern):
-        """
-        Method: Matches patterns to text and builds the return data structure.
-        :param article: Article Object w/ attribute text_dict. {heading_0: text:str, heading_1: text:str}
-        :param  pattern: List[Dict] = [
-            {"label": "Probability & Statistics", "pattern": "normal distribution"},
-            {"label": "Probability & Statistics", "pattern": "continuous distribution"}]
-        :return List as follows:
-        data = [
-        ("This is text with important information",[(start_span, end_span, label)]),
-        ("important information and I promise it is important",[(start_span, end_span, label), (start_span, end_span, label)])
-        ]
-        """
-        # todo: Convert article_tbl code and base_models.py code to accommodate new match logic here
-        concatenated_text = ' '.join([section_text for section_text in article.text_dict.values()])
-
-        test_pattern_fuzzy = convert_fuzzy_match(pattern)
-        nlp = English()
-        ruler = nlp.add_pipe("entity_ruler", config=entity_ruler_config)
-        ruler.add_patterns(test_pattern_fuzzy)
-        nlp.add_pipe(ruler)
-
-        # Builds document object for this text
-        doc = nlp(concatenated_text)
-        entities = [(ent.start_char, ent.end_char, ent.label_) for ent in doc.ents]
-        return entities
-
-
