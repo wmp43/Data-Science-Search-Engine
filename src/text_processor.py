@@ -12,7 +12,7 @@ from langchain.text_splitter import (TokenTextSplitter,
                                      CharacterTextSplitter,
                                      SpacyTextSplitter)
 
-from config import ner_pattern
+from config import ner_pattern, entity_ruler_config
 from spacy.lang.en import English
 
 
@@ -193,43 +193,64 @@ class BaseTextProcessor(TextProcessor):
         else:
             print("Error in Embedding Encoding API call:", response.status_code, response.text)
 
-    def build_metadata(self, article: Article, **kwargs):
-        test_pattern_fuzzy = convert_fuzzy_match(ner_pattern)
-        metadata_dict = {}
-        nlp = English()
-        ruler = nlp.add_pipe("entity_ruler")
-        ruler.add_patterns(test_pattern_fuzzy)
+    def build_metadata_from_model(self, article: Article, pattern=ner_pattern):
+        """
+        Method: Matches patterns to text and builds the return data structure.
+        :param article: Article Object w/ attribute text_dict. {heading_0: text:str, heading_1: text:str}
+        :param  pattern: List[Dict] = [
+            {"label": "Probability & Statistics", "pattern": "normal distribution"},
+            {"label": "Probability & Statistics", "pattern": "continuous distribution"}]
+        :return List as follows:
+        data = [
+        ("This is text with important information",[(start_span, end_span, label)]),
+        ("important information and I promise it is important",[(start_span, end_span, label), (start_span, end_span, label)])
+        ]
+        """
+        # test_pattern_fuzzy = convert_fuzzy_match(pattern)
+        # metadata_dict = {}
+        # nlp = English()
+        # ruler = nlp.add_pipe("entity_ruler", config=entity_ruler_config)
+        # ruler.add_patterns(test_pattern_fuzzy)
+        #
+        # for heading, content in article.text_dict.items():
+        #     sub_metadata_dict = {}
+        #     doc = nlp(content)
+        #     for ent in doc.ents:
+        #         if ent.label_ in sub_metadata_dict:
+        #             sub_metadata_dict[ent.label_].add(ent.text)
+        #         else:
+        #             sub_metadata_dict[ent.label_] = {ent.text}
+        #     metadata_dict[heading] = {key: list(value) for key, value in sub_metadata_dict.items()}
+        # return metadata_dict
+        """This section will be used to call the ner endpoint when model is developed. The model will be
+        called and returned in a similar data structure to maintain record integrity to the above loop"""
+        pass
 
-        for heading, content in article.text_dict.items():
-            sub_metadata_dict = {}
-            doc = nlp(content)
-            for ent in doc.ents:
-                if ent.label_ in sub_metadata_dict:
-                    sub_metadata_dict[ent.label_].add(ent.text)
-                else:
-                    sub_metadata_dict[ent.label_] = {ent.text}
-            metadata_dict[heading] = {key: list(value) for key, value in sub_metadata_dict.items()}
-        return metadata_dict
-
-    def build_metadata_json(self, article: Article, patterns: list):
-        # Fix this... What was I thinking lol??
-        # todo: Build a proper fuzzy match func to create jsonl data for ner model finetune
+    def build_training_metadata(self, article: Article, pattern=ner_pattern):
+        """
+        Method: Matches patterns to text and builds the return data structure.
+        :param article: Article Object w/ attribute text_dict. {heading_0: text:str, heading_1: text:str}
+        :param  pattern: List[Dict] = [
+            {"label": "Probability & Statistics", "pattern": "normal distribution"},
+            {"label": "Probability & Statistics", "pattern": "continuous distribution"}]
+        :return List as follows:
+        data = [
+        ("This is text with important information",[(start_span, end_span, label)]),
+        ("important information and I promise it is important",[(start_span, end_span, label), (start_span, end_span, label)])
+        ]
+        """
+        # todo: Convert article_tbl code and base_models.py code to accommodate new match logic here
         concatenated_text = ' '.join([section_text for section_text in article.text_dict.values()])
-        concatenated_text = re.sub(r'[\n\t]', ' ', concatenated_text)
 
-        annotations = []
-        for pattern in patterns:
-            label = pattern['label']
-            term = pattern['pattern']
-            for match in re.finditer(re.escape(term), concatenated_text, re.IGNORECASE):
-                start, end = match.span()
-                annotations.append([start, end, label])
+        test_pattern_fuzzy = convert_fuzzy_match(pattern)
+        nlp = English()
+        ruler = nlp.add_pipe("entity_ruler", config=entity_ruler_config)
+        ruler.add_patterns(test_pattern_fuzzy)
+        nlp.add_pipe(ruler)
 
-        doccano_json = {
-            "id": article.id,
-            'title': article.title,
-            "text": concatenated_text,
-            "labels": annotations
-        }
+        # Builds document object for this text
+        doc = nlp(concatenated_text)
+        entities = [(ent.start_char, ent.end_char, ent.label_) for ent in doc.ents]
+        return entities
 
-        return doccano_json
+
