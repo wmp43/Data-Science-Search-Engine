@@ -7,9 +7,13 @@ from src.relational import ArticlesTable
 from src.text_processor import BaseTextProcessor
 import spacy
 from spacy.tokens import DocBin
-from config import (rds_host, rds_dbname, rds_user, rds_password, rds_port, data_science_articles)
+from config import (rds_host, rds_dbname, rds_user, rds_password, rds_port, ner_articles, test_pattern)
 from tqdm import tqdm
+from typing import List, Dict
 import json
+import random
+from spacy.util import filter_spans
+
 """
 This is a file to build a article table for ner or embeddings
 
@@ -24,27 +28,34 @@ Ingestion pipeline for full article and text data
 6. Use it for fine-tuning
 """
 
-SECTIONS_TO_IGNORE = ["References", "External links", "Further reading", "Footnotes", "Bibliography", "Sources", "See also"
-    "Citations", "Literature", "Footnotes", "Notes and references", "Photo gallery", "Works cited", "Photos", "Gallery",
-    "Notes", "References and sources", "References and notes"]
-
+SECTIONS_TO_IGNORE = ["References", "External links", "Further reading", "Footnotes", "Bibliography", "Sources",
+                      "See also"
+                      "Citations", "Literature", "Footnotes", "Notes and references", "Photo gallery", "Works cited",
+                      "Photos", "Gallery",
+                      "Notes", "References and sources", "References and notes"]
 
 """
 Ingest should only really be run if new article titles or labels have been devlop in the config file.
 Takes around 45 seconds per 100 articles.
 For Actual ingestion the see also section should be directly used to find related articles of our meta article list
 Must limit to 2 edges from original in order to limit infinite search
-
-
-56098
 """
+
+BUILD_ARTICLE_LIST = True
+if BUILD_ARTICLE_LIST:
+    # To build finetuning data I think just getting all articles under see also for each
+    # May not be necessary right now
+    print('Implement Build Article List')
+
+
+# Data ingestion + tagging creation !!!!!!
 wiki_api = WikipediaAPI()
 processor = BaseTextProcessor()
-INGEST = False
+INGEST = True
 if INGEST:
     unique_id = -2
     emb_tbl = ArticlesTable(rds_dbname, rds_user, rds_password, rds_host, rds_port)
-    for TITLE in tqdm(set(data_science_articles), desc='Progress'):
+    for TITLE in tqdm(set(ner_articles), desc='Progress'):
         title, page_id, final_text = wiki_api.fetch_article_data(TITLE)
         if page_id == -1:
             page_id = unique_id
@@ -57,9 +68,11 @@ if INGEST:
         #     print(metadata, type(metadata))
         #     total_text += text
         # cleaned_text = re.sub(r'[\n\t]', ' ', total_text)
-        emb_tbl.add_record(json_record['id'], json_record['text'], json_record['title'], json.dumps(json_record['labels']))
-    emb_tbl.close_connection()
+        # Should maybe consider creating column for train or test...... with random chance of testing being .3
 
+        emb_tbl.add_record(json_record['id'], json_record['text'], json_record['title'],
+                           json.dumps(json_record['labels']))
+    emb_tbl.close_connection()
 
 """
 This builds a JsonL object that can be used in doccano labelling. 
@@ -79,47 +92,32 @@ if BUILD_JSONL:
             file.write(json_string + '\n')
     print("File 'doccano_data.jsonl' has been created.")
 
-
 """
 This builds a spacy format dataset for fine-tuning spaCy model.
-Data format:
+Need to distinguish build of training and test data, .3 proba of test .7 proba of train
 """
-BUILD_SPACY = True
-if BUILD_SPACY:
+BUILD_SPACY_DATA = False
+if BUILD_SPACY_DATA:
     emb_df = ArticlesTable(rds_dbname, rds_user, rds_password, rds_host, rds_port)
     art_df = emb_df.get_all_data_pd()
     training_data = []
     for _, row in art_df.iterrows():
         entities = [tuple(entity) for entity in row['label']]
         training_data.append((row['text'], entities))
-    """
-    So now training_data is spacy formatted. Can now build the .spacy file for training
-    
-    the building of .spacy train data has some considerations:
-    1. nlp var is a blank english model. We need something for ner: https://spacy.io/models
-    2. Currently our training data is our entire dataset. So we will have to find new unique articles.
-        - think I'm just gonna build a new list in config only iterate through non-training titles
-    """
     nlp = spacy.load('en_core_web_sm')
-    db = DocBin()
-    for text, annotations in training_data:
-        doc = nlp(text)
+    db_train, db_test = DocBin(), DocBin()
+    for idx, (text, annotations) in enumerate(training_data):
+        train_test_split = random.choices(population=['train', 'test'], weights=[0.75, 0.25])[0]
+        doc = nlp.make_doc(text)
         ents = []
         for start, end, label in annotations:
             span = doc.char_span(start, end, label=label)
-            ents.append(span)
-            """
-            Traceback (most recent call last):
-            File "/Users/owner/myles-personal-env/Projects/wikiSearch/src/models/article_tbl.py", line 111, in <module>
-            doc.ents = ents
-            File "spacy/tokens/doc.pyx", line 790, in spacy.tokens.doc.Doc.ents.__set__
-            File "spacy/tokens/doc.pyx", line 2005, in spacy.tokens.doc.get_entity_info
-            TypeError: object of type 'NoneType' has no len()
-            
-            I guess my span metadata_pipeline doesn't work ideally. 
-            I suppose we can rebuild this just from text articles table
-            Also should include standard tags that are built from classical ner from spaCy
-            """
+            if span is not None: ents.append(span)
+        ents = spacy.util.filter_spans(ents)
         doc.ents = ents
-        db.add(doc)
-    db.to_disk("./train.spacy")
+        if train_test_split == 'train':
+            db_train.add(doc)
+        else:
+            db_test.add(doc)
+    db_train.to_disk("./train.spacy")
+    db_test.to_disk("./test.spacy")

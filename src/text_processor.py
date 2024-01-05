@@ -16,6 +16,17 @@ from config import test_pattern
 from spacy.lang.en import English
 
 
+def convert_fuzzy_match(patterns: List[Dict]) -> List[Dict]:
+    spacy_patterns = []
+    for entry in patterns:
+        label = entry['label']
+        pattern_string = entry['pattern']
+        # Split the pattern string into individual words and create a pattern for each word
+        token_patterns = [{'LOWER': token.lower()} for token in pattern_string.split()]
+        spacy_patterns.append({'label': label, 'pattern': token_patterns})
+    return spacy_patterns
+
+
 class TextProcessor(ABC):
 
     @abstractmethod
@@ -182,10 +193,11 @@ class BaseTextProcessor(TextProcessor):
             print("Error in Embedding Encoding API call:", response.status_code, response.text)
 
     def build_metadata(self, article: Article, **kwargs):
+        test_pattern_fuzzy = convert_fuzzy_match(test_pattern)
         metadata_dict = {}
         nlp = English()
         ruler = nlp.add_pipe("entity_ruler")
-        ruler.add_patterns(test_pattern)
+        ruler.add_patterns(test_pattern_fuzzy)
 
         for heading, content in article.text_dict.items():
             sub_metadata_dict = {}
