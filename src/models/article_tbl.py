@@ -7,7 +7,7 @@ from src.relational import ArticlesTable
 from src.text_processor import BaseTextProcessor
 import spacy
 from spacy.tokens import DocBin
-from config import (rds_host, rds_dbname, rds_user, rds_password, rds_port, ner_articles, test_pattern)
+from config import (rds_host, rds_dbname, rds_user, rds_password, rds_port, ner_articles, ner_pattern)
 from tqdm import tqdm
 from typing import List, Dict
 import json
@@ -41,7 +41,7 @@ For Actual ingestion the see also section should be directly used to find relate
 Must limit to 2 edges from original in order to limit infinite search
 """
 
-BUILD_ARTICLE_LIST = True
+BUILD_ARTICLE_LIST = False
 if BUILD_ARTICLE_LIST:
     # To build finetuning data I think just getting all articles under see also for each
     # May not be necessary right now
@@ -62,6 +62,7 @@ if INGEST:
             unique_id -= 1
         article = Article(title=title, id=page_id, text=final_text, text_processor=processor)
         article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
+        article.process_metadata_pipeline(processor)
         json_record = article.process_metadata_labeling(processor)
         # total_text = ""
         # for (key, text), metadata in zip(article.text_dict.items(), article.metadata_dict.values()):
@@ -121,3 +122,23 @@ if BUILD_SPACY_DATA:
             db_test.add(doc)
     db_train.to_disk("./train.spacy")
     db_test.to_disk("./test.spacy")
+
+
+def convert_fuzzy_match(patterns: List[Dict]) -> List[Dict]:
+    spacy_patterns = []
+    for entry in patterns:
+        label = entry['label']
+        if isinstance(entry['pattern'], str):
+            token_patterns = [{'LOWER': {'FUZZY': word.lower()}} for word in entry['pattern'].split()]
+        else:
+            token_patterns = [{'LOWER': {'FUZZY': token['LOWER']}} for token in entry['pattern']]
+        spacy_patterns.append({'label': label, 'pattern': token_patterns})
+    return spacy_patterns
+
+
+TEST = False
+if TEST:
+    data = convert_fuzzy_match(test_pattern)
+    print(len(data))
+    for i in range(352):
+        if i % 8 == 0: print(data[i])

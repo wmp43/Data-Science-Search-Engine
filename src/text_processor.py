@@ -12,7 +12,7 @@ from langchain.text_splitter import (TokenTextSplitter,
                                      CharacterTextSplitter,
                                      SpacyTextSplitter)
 
-from config import test_pattern
+from config import ner_pattern
 from spacy.lang.en import English
 
 
@@ -20,9 +20,10 @@ def convert_fuzzy_match(patterns: List[Dict]) -> List[Dict]:
     spacy_patterns = []
     for entry in patterns:
         label = entry['label']
-        pattern_string = entry['pattern']
-        # Split the pattern string into individual words and create a pattern for each word
-        token_patterns = [{'LOWER': token.lower()} for token in pattern_string.split()]
+        if isinstance(entry['pattern'], str):
+            token_patterns = [{'LOWER': {'FUZZY': word.lower()}} for word in entry['pattern'].split()]
+        else:
+            token_patterns = [{'LOWER': {'FUZZY': token['LOWER']}} for token in entry['pattern']]
         spacy_patterns.append({'label': label, 'pattern': token_patterns})
     return spacy_patterns
 
@@ -193,7 +194,7 @@ class BaseTextProcessor(TextProcessor):
             print("Error in Embedding Encoding API call:", response.status_code, response.text)
 
     def build_metadata(self, article: Article, **kwargs):
-        test_pattern_fuzzy = convert_fuzzy_match(test_pattern)
+        test_pattern_fuzzy = convert_fuzzy_match(ner_pattern)
         metadata_dict = {}
         nlp = English()
         ruler = nlp.add_pipe("entity_ruler")
@@ -207,11 +208,12 @@ class BaseTextProcessor(TextProcessor):
                     sub_metadata_dict[ent.label_].add(ent.text)
                 else:
                     sub_metadata_dict[ent.label_] = {ent.text}
-            # Convert sets to lists for final output
             metadata_dict[heading] = {key: list(value) for key, value in sub_metadata_dict.items()}
         return metadata_dict
 
     def build_metadata_json(self, article: Article, patterns: list):
+        # Fix this... What was I thinking lol??
+        # todo: Build a proper fuzzy match func to create jsonl data for ner model finetune
         concatenated_text = ' '.join([section_text for section_text in article.text_dict.values()])
         concatenated_text = re.sub(r'[\n\t]', ' ', concatenated_text)
 
