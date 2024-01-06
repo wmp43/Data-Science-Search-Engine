@@ -197,7 +197,7 @@ class BaseTextProcessor(TextProcessor):
         else:
             print("Error in Embedding Encoding API call:", response.status_code, response.text)
 
-    def build_training_metadata(self, article: Article, pattern=ner_pattern, non_fuzzy=non_fuzzy_list):
+    def build_training_metadata(self, article: Article, pattern):
         """
         Method: Matches patterns to text and builds the return data structure.
         :param non_fuzzy_list:
@@ -212,18 +212,18 @@ class BaseTextProcessor(TextProcessor):
         ]
         """
         concatenated_text = ' '.join([section_text for section_text in article.text_dict.values()])
+        cleaned_text = re.sub(r'[\n\t]+', ' ', concatenated_text)
 
-        test_pattern_fuzzy = convert_fuzzy_match(pattern, non_fuzzy)
         nlp = English()
 
         # Instead of creating a component and then adding it, directly add the component by its name
         ruler = nlp.add_pipe("entity_ruler", config=entity_ruler_config)
-        ruler.add_patterns(test_pattern_fuzzy)
+        ruler.add_patterns(pattern)
 
         # Remove the redundant `nlp.add_pipe(ruler)` line
-        doc = nlp(concatenated_text)
+        doc = nlp(cleaned_text)
         entities = [(ent.start_char, ent.end_char, ent.label_, ent.text) for ent in doc.ents]
-        return concatenated_text, entities
+        return cleaned_text, entities
 
     def build_metadata_from_model(self, article: Article, model):
         """

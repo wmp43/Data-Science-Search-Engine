@@ -7,12 +7,17 @@ from src.relational import ArticlesTable
 from src.text_processor import BaseTextProcessor
 import spacy
 from spacy.tokens import DocBin
-from config import (rds_host, rds_dbname, rds_user, rds_password, rds_port, ner_articles, ner_pattern)
+from config import (rds_host, rds_dbname, rds_user, rds_password, rds_port, ner_articles, ner_pattern, non_fuzzy_list)
 from tqdm import tqdm
 from typing import List, Dict
 import json
 import random
-from spacy.util import filter_spans
+from collections import defaultdict
+
+import warnings
+
+warnings.filterwarnings("ignore", category=UserWarning, module='spacy')
+
 
 """
 This is a file to build a article table for ner or embeddings
@@ -47,14 +52,38 @@ if BUILD_ARTICLE_LIST:
     # May not be necessary right now
     print('Implement Build Article List')
 
-test_arts = ['data_structure', 'engineering', 'Statistical_hypothesis_testing']
+
+def convert_fuzzy_match(patterns: List[Dict], non_fuzzy_list: List[str]) -> List[Dict]:
+    spacy_patterns = []
+    for entry in patterns:
+        label = entry['label']
+        pattern = entry['pattern']
+
+        if isinstance(entry['pattern'], str):
+            if pattern in non_fuzzy_list: token_patterns = [{'LOWER': word.lower()} for word in entry['pattern'].split()]
+            else: token_patterns = [{'LOWER': {'FUZZY1': word.lower()}} for word in entry['pattern'].split()]
+        else:
+            if pattern in non_fuzzy_list: token_patterns = [{'LOWER': word.lower()} for word in entry['pattern'].split()]
+            else: token_patterns = [{'LOWER': {'FUZZY1': token['LOWER']}} for token in entry['pattern']]
+        spacy_patterns.append({'label': label, 'pattern': token_patterns})
+    return spacy_patterns
+
 
 # Data ingestion + tagging creation !!!!!!
 wiki_api = WikipediaAPI()
 processor = BaseTextProcessor()
+
+
+categories = ["Mathematics", "Programming", "Probability & Statistics", "People",
+              "Organizations", "Academic Disciplines", "Machine Learning", "Publications"]
+category_counts = defaultdict(int)
+
+
 INGEST = True
 if INGEST:
+    test_pattern_fuzzy = convert_fuzzy_match(ner_pattern, non_fuzzy_list)
     unique_id = -2
+    sum, count = 0.0, 0.0
     emb_tbl = ArticlesTable(rds_dbname, rds_user, rds_password, rds_host, rds_port)
     for TITLE in tqdm(set(ner_articles), desc='Progress'):
         title, page_id, final_text = wiki_api.fetch_article_data(TITLE)
@@ -63,8 +92,11 @@ if INGEST:
             unique_id -= 1
         article = Article(title=title, id=page_id, text=final_text, text_processor=processor)
         article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
-        concatenated_text, entities = article.process_metadata_labeling(processor)
-        print(TITLE, entities[:3], concatenated_text[:200])
+        concatenated_text, entities = article.process_metadata_labeling(processor, test_pattern_fuzzy)
+        for _, _, category, _ in entities:
+            if category in categories:
+                category_counts[category] += 1
+        print(TITLE, entities[:5], concatenated_text[:100])
         # total_text = ""
         # for (key, text), metadata in zip(article.text_dict.items(), article.metadata_dict.values()):
         #     print(metadata, type(metadata))
@@ -74,6 +106,8 @@ if INGEST:
         emb_tbl.add_record(article.id, concatenated_text, article.title, json.dumps(entities))
     emb_tbl.close_connection()
 
+    for category, count in category_counts.items():
+        print(f"Category '{category}': {count} tags")
 """
 This builds a JsonL object that can be used in doccano labelling. 
 Check out docker build to avoid issues
