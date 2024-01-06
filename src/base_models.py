@@ -181,8 +181,8 @@ class Article:
         :param text_processor: Base Text Processor
         :return: Builds the entities for metadata labeling for ner
         """
-        entities = text_processor.build_training_metadata(self, pattern)
-        return entities
+        entities_dict = text_processor.build_training_metadata(self, pattern)
+        self.metadata_dict = entities_dict
 
     def show_headings(self, text_processor):
         text_processor.extract_headings(self)

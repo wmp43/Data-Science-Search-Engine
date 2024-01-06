@@ -11,7 +11,9 @@ from config import (rds_host, rds_dbname, rds_user, rds_password, rds_port, ner_
 from tqdm import tqdm
 from typing import List, Dict
 import json
+import uuid
 import random
+import re
 from collections import defaultdict
 
 import warnings
@@ -34,7 +36,7 @@ Ingestion pipeline for full article and text data
 """
 
 SECTIONS_TO_IGNORE = ["References", "External links", "Further reading", "Footnotes", "Bibliography", "Sources",
-                      "See also"
+                      "See also",
                       "Citations", "Literature", "Footnotes", "Notes and references", "Photo gallery", "Works cited",
                       "Photos", "Gallery",
                       "Notes", "References and sources", "References and notes"]
@@ -87,23 +89,12 @@ if INGEST:
     emb_tbl = ArticlesTable(rds_dbname, rds_user, rds_password, rds_host, rds_port)
     for TITLE in tqdm(set(ner_articles), desc='Progress'):
         title, page_id, final_text = wiki_api.fetch_article_data(TITLE)
-        if page_id == -1:
-            page_id = unique_id
-            unique_id -= 1
         article = Article(title=title, id=page_id, text=final_text, text_processor=processor)
         article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
-        concatenated_text, entities = article.process_metadata_labeling(processor, test_pattern_fuzzy)
-        for _, _, category, _ in entities:
-            if category in categories:
-                category_counts[category] += 1
-        print(TITLE, entities[:5], concatenated_text[:100])
-        # total_text = ""
-        # for (key, text), metadata in zip(article.text_dict.items(), article.metadata_dict.values()):
-        #     print(metadata, type(metadata))
-        #     total_text += text
-        # cleaned_text = re.sub(r'[\n\t]', ' ', total_text)
-        # Should maybe consider creating column for train or test...... with random chance of testing being .3
-        emb_tbl.add_record(article.id, concatenated_text, article.title, json.dumps(entities))
+        article.process_metadata_labeling(processor, test_pattern_fuzzy)
+        for (key, text), metadata in zip(article.text_dict.items(), article.metadata_dict.values()):
+            text = re.sub(r'[\n\t]+', ' ', text)
+            emb_tbl.add_record(str(uuid.uuid4()), key, article.title, text, json.dumps(metadata))
     emb_tbl.close_connection()
 
     for category, count in category_counts.items():
@@ -130,7 +121,7 @@ if BUILD_JSONL:
 This builds a spacy format dataset for fine-tuning spaCy model.
 Need to distinguish build of training and test data, .3 proba of test .7 proba of train
 """
-BUILD_SPACY_DATA = False
+BUILD_SPACY_DATA = True
 if BUILD_SPACY_DATA:
     emb_df = ArticlesTable(rds_dbname, rds_user, rds_password, rds_host, rds_port)
     art_df = emb_df.get_all_data_pd()
@@ -144,7 +135,7 @@ if BUILD_SPACY_DATA:
         train_test_split = random.choices(population=['train', 'test'], weights=[0.75, 0.25])[0]
         doc = nlp.make_doc(text)
         ents = []
-        for start, end, label in annotations:
+        for start, end, label, pattern in annotations:
             span = doc.char_span(start, end, label=label)
             if span is not None: ents.append(span)
         ents = spacy.util.filter_spans(ents)
@@ -153,5 +144,6 @@ if BUILD_SPACY_DATA:
             db_train.add(doc)
         else:
             db_test.add(doc)
+    print(type(training_data[:1]), training_data[:5])
     db_train.to_disk("./train.spacy")
     db_test.to_disk("./test.spacy")

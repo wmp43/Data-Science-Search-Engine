@@ -91,7 +91,7 @@ class ArticlesTable:
         except psycopg2.Error as e:
             print(f"Unable to connect to the database: {e}")
 
-    def add_record(self, id, text, title, label):
+    def add_record(self, id, text, title, section, label):
         """
         :param id: Id of the record
         :param text: Resultant Text of the record
@@ -99,7 +99,8 @@ class ArticlesTable:
         :return: None i gues
         """
         with self.conn.cursor() as cur:
-            cur.execute("INSERT INTO articles (id, text, title, label) VALUES (%s, %s, %s, %s)", (id, text, title, label))
+            cur.execute("INSERT INTO articles (id, text, title, section, label) "
+                        "VALUES (%s, %s, %s, %s, %s)", (id, text, section, title, label))
             self.conn.commit()
 
     def get_record(self, title):

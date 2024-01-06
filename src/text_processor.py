@@ -197,7 +197,7 @@ class BaseTextProcessor(TextProcessor):
         else:
             print("Error in Embedding Encoding API call:", response.status_code, response.text)
 
-    def build_training_metadata(self, article: Article, pattern):
+    def build_training_metadata(self, article: Article, pattern: List) -> Dict:
         """
         Method: Matches patterns to text and builds the return data structure.
         :param non_fuzzy_list:
@@ -211,19 +211,20 @@ class BaseTextProcessor(TextProcessor):
         ("important information and I promise it is important",[(start_span, end_span, label), (start_span, end_span, label)])
         ]
         """
-        concatenated_text = ' '.join([section_text for section_text in article.text_dict.values()])
-        cleaned_text = re.sub(r'[\n\t]+', ' ', concatenated_text)
-
+        # Spacy Setup for matching
         nlp = English()
-
-        # Instead of creating a component and then adding it, directly add the component by its name
         ruler = nlp.add_pipe("entity_ruler", config=entity_ruler_config)
         ruler.add_patterns(pattern)
 
-        # Remove the redundant `nlp.add_pipe(ruler)` line
-        doc = nlp(cleaned_text)
-        entities = [(ent.start_char, ent.end_char, ent.label_, ent.text) for ent in doc.ents]
-        return cleaned_text, entities
+        # Add ents to metadata dict
+        metadata_dict = {}
+        for key, value in article.text_dict.items():
+            value = re.sub(r'[\n\t]+', ' ', value)
+            doc = nlp(value)
+            entities = [(ent.start_char, ent.end_char, ent.label_, ent.text) for ent in doc.ents]
+            metadata_dict[key] = entities
+
+        return metadata_dict
 
     def build_metadata_from_model(self, article: Article, model):
         """

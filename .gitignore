@@ -9,3 +9,4 @@ config.py
 text_cleaning_tests/
 /src/models/doccano_data.jsonl
 /src/models/train.spacy
+/src/models/test.spacy
