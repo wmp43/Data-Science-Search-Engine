@@ -70,6 +70,19 @@ def convert_fuzzy_match(patterns: List[Dict], non_fuzzy_list: List[str]) -> List
         spacy_patterns.append({'label': label, 'pattern': token_patterns})
     return spacy_patterns
 
+def clean_label(label_list):
+    rectified_labels = []
+    for entity in label_list:
+        start, end, ent_type, ent_text = entity
+        corrected_text = ent_text.strip()
+        if corrected_text != ent_text:
+            new_start = start + ent_text.find(corrected_text)
+            new_end = new_start + len(corrected_text)
+            rectified_labels.append([new_start, new_end, ent_type, corrected_text])
+        else:
+            rectified_labels.append(entity)
+    return rectified_labels
+
 
 # Data ingestion + tagging creation !!!!!!
 wiki_api = WikipediaAPI()
@@ -81,7 +94,7 @@ categories = ["Mathematics", "Programming", "Probability & Statistics", "People"
 category_counts = defaultdict(int)
 
 
-INGEST = True
+INGEST = False
 if INGEST:
     test_pattern_fuzzy = convert_fuzzy_match(ner_pattern, non_fuzzy_list)
     unique_id = -2
@@ -107,7 +120,7 @@ Username & password inside cover page of statistics for DS book
 
 
 """
-The fucking titles in the db are skewed. Title is the text while text is the title...
+The titles in the db are skewed. Title is the text while text is the title...
 """
 
 BUILD_JSONL = False
@@ -130,6 +143,7 @@ BUILD_SPACY_DATA = True
 if BUILD_SPACY_DATA:
     emb_df = ArticlesTable(rds_dbname, rds_user, rds_password, rds_host, rds_port)
     art_df = emb_df.get_all_data_pd()
+    art_df['label'] = art_df['label'].apply(clean_label)
     training_data = []
     for _, row in art_df.iterrows():
         entities = [tuple(entity) for entity in row['label']]
