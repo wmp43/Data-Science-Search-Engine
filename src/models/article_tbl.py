@@ -105,6 +105,11 @@ Check out docker build to avoid issues
 Username & password inside cover page of statistics for DS book
 """
 
+
+"""
+The fucking titles in the db are skewed. Title is the text while text is the title...
+"""
+
 BUILD_JSONL = False
 if BUILD_JSONL:
     emb_df = ArticlesTable(rds_dbname, rds_user, rds_password, rds_host, rds_port)
@@ -128,7 +133,7 @@ if BUILD_SPACY_DATA:
     training_data = []
     for _, row in art_df.iterrows():
         entities = [tuple(entity) for entity in row['label']]
-        training_data.append((row['text'], entities))
+        training_data.append((row['title'], entities))
     nlp = spacy.load('en_core_web_sm')
     db_train, db_test = DocBin(), DocBin()
     for idx, (text, annotations) in enumerate(training_data):
@@ -144,6 +149,6 @@ if BUILD_SPACY_DATA:
             db_train.add(doc)
         else:
             db_test.add(doc)
-    print(type(training_data[:1]), training_data[:5])
+
     db_train.to_disk("./train.spacy")
     db_test.to_disk("./test.spacy")
