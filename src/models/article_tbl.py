@@ -6,6 +6,7 @@ from src.api import WikipediaAPI
 from src.relational import ArticlesTable
 from src.text_processor import BaseTextProcessor
 import spacy
+from spacy import displacy
 from spacy.tokens import DocBin
 from config import (rds_host, rds_dbname, rds_user, rds_password, rds_port, ner_articles, ner_pattern, non_fuzzy_list)
 from tqdm import tqdm
@@ -139,7 +140,8 @@ if BUILD_JSONL:
 This builds a spacy format dataset for fine-tuning spaCy model.
 Need to distinguish build of training and test data, .3 proba of test .7 proba of train
 """
-BUILD_SPACY_DATA = True
+
+BUILD_SPACY_DATA = False
 if BUILD_SPACY_DATA:
     emb_df = ArticlesTable(rds_dbname, rds_user, rds_password, rds_host, rds_port)
     art_df = emb_df.get_all_data_pd()
@@ -166,3 +168,50 @@ if BUILD_SPACY_DATA:
 
     db_train.to_disk("./train.spacy")
     db_test.to_disk("./test.spacy")
+
+
+NER_TEST = True
+from src.base_models import Article
+from src.api import WikipediaAPI
+import re
+from src.text_processor import BaseTextProcessor
+import spacy
+from spacy import displacy
+SECTIONS_TO_IGNORE = ["References", "External links", "Further reading", "Footnotes", "Bibliography", "Sources",
+                      "See also",
+                      "Citations", "Literature", "Footnotes", "Notes and references", "Photo gallery", "Works cited",
+                      "Photos", "Gallery",
+                      "Notes", "References and sources", "References and notes"]
+
+
+if NER_TEST:
+    """
+    Some notes from visualiztion on new Wikipedia Articles.
+    - Current model is over-fit. It remembers exact strings from the config pattern.
+    - It selects things like engineering as Academic disciplines, when the phrase is Information Engineering
+    - Sometimes it doesnt even select exact matches
+    - Need to try some different configs, maybe early stopping too
+    """
+    wiki_api = WikipediaAPI()
+    processor = BaseTextProcessor()
+    WIKI = 'Information_engineering'
+    title, page_id, final_text = wiki_api.fetch_article_data(WIKI)
+    article = Article(title=title, id=page_id, text=final_text, text_processor=processor)
+    article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
+    concat_text = str([re.sub(r'[\n\t]+', ' ', text) for text in article.text_dict.values()])
+    ner_model = spacy.load('/Users/owner/myles-personal-env/Projects/wikiSearch/src/models/model-best')
+    doc = ner_model(concat_text)
+    doc.user_data["title"] = 'Wikipedia Article: ' + WIKI + 'W/ ner tags'
+
+    colors = {
+        "Probability & Statistics": "#FFA07A",
+        "Machine Learning": "#20B2AA",
+        "Mathematics": "#778899",
+        "Data": "#9370DB",  # Medium Purple
+        "Organizations": "#FFD700",  # Gold
+        "People": "#F08080",  # Light Coral
+        "Programming": "#00FA9A",  # Medium Spring Green
+        "Academic Disciplines": "#4682B4"}
+    options = {"colors": colors}
+
+    displacy.serve(doc, style="ent", options=options, port=1050)
