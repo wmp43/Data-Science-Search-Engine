@@ -47,7 +47,7 @@ if NER_TEST:
     """
     wiki_api = WikipediaAPI()
     processor = BaseTextProcessor()
-    WIKI = 'Data_Science_and_Predictive_Analytics'
+    WIKI = 'Information_engineering'
     title, page_id, final_text = wiki_api.fetch_article_data(WIKI)
     article = Article(title=title, id=page_id, text=final_text, text_processor=processor)
     article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
@@ -65,5 +65,5 @@ if NER_TEST:
         "Programming": "#00FA9A",  # Medium Spring Green
         "Academic Disciplines": "#4682B4"}
 
-    displacy.serve(doc, style="ent", options={"colors": colors}, port=1050)
+    displacy.serve(doc, style="ent", options={"colors": colors}, port=1111)
 
