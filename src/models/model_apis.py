@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import tiktoken  # Assuming this is a module you have for encoding
 from InstructorEmbedding import INSTRUCTOR
-import json
+import spacy
 import numpy as np
 
 """
@@ -39,10 +39,12 @@ def _build_embeddings(article: dict, model):
 
 @app.route('/ner_api', methods=['POST'])
 def ner_api():
-    # todo: develop model and store json path
-    model.load("SOMEJSONPATH")
-    ner = model.predict("ARG_TEXT")
-    return ner
+    ner_model = spacy.load('/Users/owner/myles-personal-env/Projects/wikiSearch/src/models/model-best')
+    data = request.get_json()
+    text = data.get("text")
+    doc = ner_model(text)
+    entities = [(ent.text, ent.label_) for ent in doc.ents]
+    return {"entities": entities}
 
 
 if __name__ == '__main__':
