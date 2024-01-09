@@ -189,6 +189,7 @@ if NER_TEST:
     Some notes from visualiztion on new Wikipedia Articles.
     - Current model is over-fit. It remembers exact strings from the config pattern.
     - It selects things like engineering as Academic disciplines, when the phrase is Information Engineering
+    - Make more specific Academic tags away from just engineering
     - Sometimes it doesnt even select exact matches
     - Need to try some different configs, maybe early stopping too
     """
@@ -201,7 +202,7 @@ if NER_TEST:
     concat_text = str([re.sub(r'[\n\t]+', ' ', text) for text in article.text_dict.values()])
     ner_model = spacy.load('/Users/owner/myles-personal-env/Projects/wikiSearch/src/models/model-best')
     doc = ner_model(concat_text)
-    doc.user_data["title"] = 'Wikipedia Article: ' + WIKI + 'W/ ner tags'
+    doc.user_data["title"] = 'Wikipedia Article: ' + WIKI + ' w/ ner tags'
 
     colors = {
         "Probability & Statistics": "#FFA07A",
