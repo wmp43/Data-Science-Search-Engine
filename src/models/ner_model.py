@@ -47,7 +47,7 @@ if NER_TEST:
     """
     wiki_api = WikipediaAPI()
     processor = BaseTextProcessor()
-    WIKI = 'Information_engineering'
+    WIKI = 'Cluster_analysis'
     title, page_id, final_text = wiki_api.fetch_article_data(WIKI)
     article = Article(title=title, id=page_id, text=final_text, text_processor=processor)
     article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
@@ -59,10 +59,10 @@ if NER_TEST:
         "Probability & Statistics": "#FFA07A",
         "Machine Learning": "#20B2AA",
         "Mathematics": "#778899",
-        "Data": "#9370DB",  # Medium Purple
-        "Organizations": "#FFD700",  # Gold
-        "People": "#F08080",  # Light Coral
-        "Programming": "#00FA9A",  # Medium Spring Green
+        "Data": "#9370DB",
+        "Organizations": "#FFD700",
+        "People": "#F08080",
+        "Programming": "#00FA9A",
         "Academic Disciplines": "#4682B4"}
 
     displacy.serve(doc, style="ent", options={"colors": colors}, port=1111)

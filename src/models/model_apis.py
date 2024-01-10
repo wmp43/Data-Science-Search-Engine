@@ -39,12 +39,23 @@ def _build_embeddings(article: dict, model):
 
 @app.route('/ner_api', methods=['POST'])
 def ner_api():
+    article_data = request.json.get('article')
     ner_model = spacy.load('/Users/owner/myles-personal-env/Projects/wikiSearch/src/models/model-best')
-    data = request.get_json()
-    text = data.get("text")
-    doc = ner_model(text)
-    entities = [(ent.text, ent.label_) for ent in doc.ents]
-    return {"entities": entities}
+    metadata_dict = _build_ner(article_data, ner_model)
+    return jsonify(metadata_dict)
+
+
+def _build_ner(article: dict, ner_model):
+    ner_dict = {}
+    for idx, (section, content) in enumerate(article.items()):
+        doc = ner_model(content)
+        entities = [(ent.text, ent.label_) for ent in doc.ents]
+        meta_dict = {}
+        for text, label in entities:
+            if text not in meta_dict[label]: meta_dict[label].append(text)
+            else: continue
+        ner_dict[section] = meta_dict
+    return ner_dict
 
 
 if __name__ == '__main__':

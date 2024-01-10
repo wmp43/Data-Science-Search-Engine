@@ -52,9 +52,11 @@ class VectorTable(RelationalDB):
         except psycopg2.Error as e:
             print(f"Unable to connect to the database: {e}")
 
-    def add_record(self):
-        # Logic to add a category to the database
-        pass
+    def add_record(self, title, id, vector, encoding, section, metadata):
+        with self.conn.cursor() as cur:
+            cur.execute("INSERT INTO vectors (title, id, vector, encoding, section, metadata) "
+                        "VALUES (%s, %s, %s, %s, %s, %s)", (title, id, vector, encoding, section, metadata))
+            self.conn.commit()
 
     def get_record(self, title: str):
         # Logic to retrieve a category from the database

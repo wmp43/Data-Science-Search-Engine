@@ -110,19 +110,17 @@ class Category:
 Vector record
     vector_record = {
         "embedding": np.ndarray,
-        "encoding": np.ndarray # built from the text dict. Can use tiktoken.encode(text)
+        "encoding":
         "id": 1234,
         "title": "title of article",
-        "metadata": {"section heading":{
-                "Probability & Statistics": ['bayesian_statistics', 'posterior_probability', 'bayes_estimation'],
-                "Machine Learning": ['overfitting'],
-                "Mathematics": ['matrix multiplication'],
-                "People": ['machine learning engineer'],
-                "Categories":['Category_1', 'Category_2']
-                }
+        "section": section_heading
+        "metadata": [ent.text, ent.label]
         }
     }
     """
+
+
+
 
 
 @dataclass
@@ -132,7 +130,7 @@ class Article:
     text: str
     text_dict: Dict[str, str] = field(default_factory=dict)  # Text Dict and embedding Dict match on section heading.
     embedding_dict: Dict[str, Tuple] = field(default_factory=dict)  # [0] embedding for vec search -- [1] encoding
-    metadata_dict: Dict[str, Dict[str, any]] = field(default_factory=dict)
+    metadata_dict: Dict[str, List] = field(default_factory=dict)
     text_processor: any = None
 
     # def print_attribute_types(self):
@@ -226,4 +224,11 @@ class Query(BaseModel):
     def encode_query(self):
         # embed the query
         # search the db for cosine_sim argmax
+        pass
+
+    def expand_query(self):
+        """
+        Expand the query for more specific retrieval
+        :return: Expanded Query
+        """
         pass

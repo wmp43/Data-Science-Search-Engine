@@ -23,11 +23,15 @@ def convert_fuzzy_match(patterns: List[Dict], non_fuzzy_list: List[str]) -> List
         pattern = entry['pattern']
 
         if isinstance(entry['pattern'], str):
-            if pattern in non_fuzzy_list: token_patterns = [{'LOWER': word.lower()} for word in entry['pattern'].split()]
-            else: token_patterns = [{'LOWER': {'FUZZY1': word.lower()}} for word in entry['pattern'].split()]
+            if pattern in non_fuzzy_list:
+                token_patterns = [{'LOWER': word.lower()} for word in entry['pattern'].split()]
+            else:
+                token_patterns = [{'LOWER': {'FUZZY1': word.lower()}} for word in entry['pattern'].split()]
         else:
-            if pattern in non_fuzzy_list: token_patterns = [{'LOWER': word.lower()} for word in entry['pattern'].split()]
-            else: token_patterns = [{'LOWER': {'FUZZY1': token['LOWER']}} for token in entry['pattern']]
+            if pattern in non_fuzzy_list:
+                token_patterns = [{'LOWER': word.lower()} for word in entry['pattern'].split()]
+            else:
+                token_patterns = [{'LOWER': {'FUZZY1': token['LOWER']}} for token in entry['pattern']]
         spacy_patterns.append({'label': label, 'pattern': token_patterns})
     return spacy_patterns
 
@@ -63,8 +67,8 @@ class TextProcessor(ABC):
         pass
 
     @abstractmethod
-    def build_metadata_from_model(self, article, model):
-         pass
+    def build_metadata(self, article, model):
+        pass
 
 
 class BaseTextProcessor(TextProcessor):
@@ -226,7 +230,7 @@ class BaseTextProcessor(TextProcessor):
 
         return metadata_dict
 
-    def build_metadata_from_model(self, article: Article, model):
+    def build_metadata(self, article: Article, model):
         """
         Method: Matches patterns to text and builds the return data structure.
         :param article: Article Object w/ attribute text_dict. {heading_0: text:str, heading_1: text:str}
@@ -237,22 +241,10 @@ class BaseTextProcessor(TextProcessor):
         ("important information and I promise it is important",[(start_span, end_span, label), (start_span, end_span, label)])
         ]
         """
-        # test_pattern_fuzzy = convert_fuzzy_match(pattern)
-        # metadata_dict = {}
-        # nlp = English()
-        # ruler = nlp.add_pipe("entity_ruler", config=entity_ruler_config)
-        # ruler.add_patterns(test_pattern_fuzzy)
-        #
-        # for heading, content in article.text_dict.items():
-        #     sub_metadata_dict = {}
-        #     doc = nlp(content)
-        #     for ent in doc.ents:
-        #         if ent.label_ in sub_metadata_dict:
-        #             sub_metadata_dict[ent.label_].add(ent.text)
-        #         else:
-        #             sub_metadata_dict[ent.label_] = {ent.text}
-        #     metadata_dict[heading] = {key: list(value) for key, value in sub_metadata_dict.items()}
-        # return metadata_dict
-        """This section will be used to call the ner endpoint when model is developed. The model will be
-        called and returned in a similar data structure to maintain record integrity to the above loop"""
-        pass
+        payload, api_url = {'article': article.text_dict}, "http://127.0.0.1:5000/ner_api"
+        response = requests.post(api_url, json=payload)
+        if response.status_code == 200:
+            embed_dict = response.json()
+            return embed_dict
+        else:
+            print("Error in NER API call:", response.status_code, response.text)
