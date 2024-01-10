@@ -48,20 +48,28 @@ class WikipediaAPI(BaseModel):
             "explaintext": True,
             "format": "json"
         }
+        try:
+            response = requests.get(url=URL, params=PARAMS)
+            data = response.json()
+            pages = data["query"]["pages"]
 
-        response = requests.get(url=URL, params=PARAMS)
-        data = response.json()
-        pages = data["query"]["pages"]
+            page_id = next(iter(pages))
+            content = pages[page_id].get("extract", "")
+            tokens = content.split()
+            cleaned_tokens = [token for token in tokens]
+            cleaned_text = ' '.join(cleaned_tokens)
+            spaceless_text = re.sub(r'[\n\t]+', '', cleaned_text)
+            final_text = re.sub(r' {2}', ' ', spaceless_text)
+            title = pages[page_id].get("title", "")
+            return title, page_id, final_text
+        
+        except requests.exceptions.RequestException as e:
+            print(f"HTTP Request failed: {e}")
+        except Exception as e:
+            print(f"Error processing article data: {e}")
 
-        page_id = next(iter(pages))
-        content = pages[page_id].get("extract", "")
-        tokens = content.split()
-        cleaned_tokens = [token for token in tokens]
-        cleaned_text = ' '.join(cleaned_tokens)
-        spaceless_text = re.sub(r'[\n\t]+', '', cleaned_text)
-        final_text = re.sub(r' {2}', ' ', spaceless_text)
-        title = pages[page_id].get("title", "")
-        return title, page_id, final_text
+        return None, None, None
+
 
 
 

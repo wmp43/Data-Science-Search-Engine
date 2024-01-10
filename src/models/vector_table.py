@@ -13,6 +13,8 @@ import uuid
 import re
 import mwparserfromhell
 import requests
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 
 
 def get_wikitext(page_title):
@@ -57,17 +59,62 @@ def expand_article_list(original_list):
     return list(expanded_list)
 
 
-expanded_articles = expand_article_list(ner_articles)
-wiki_api, processor, vector_tbl = WikipediaAPI(), BaseTextProcessor(), VectorTable()
+def data_validation():
+    # todo: Data Validation Function that certifies upserted records follow data format
+    pass
 
-while tqdm(set(expanded_articles), desc='Progress'):
-    title = re.sub(' ', '_', expanded_articles.pop(1))
-    title, page_id, final_text = wiki_api.fetch_article_data(title)
-    article = Article(title, page_id, final_text)
-    article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
-    article.get_categories(processor)
-    article.process_embedding_pipeline(processor)
-    article.process_metadata_pipeline(processor)
-    for keys, vector, encoding, metadata in zip(article.text_dict.keys(), article.embedding_dict.values(),
-                                                article.metadata_dict.values()):
-        vector_tbl.add_record(article.title, uuid.uuid4(), vector, encoding, article.categories, metadata)
+
+# todo: reset articles table to store categories, text, and title
+def threaded_article_pipeline(title: str, vector_table: VectorTable, article_table: ArticleTable):
+    try:
+        # Processing the article
+        threaded_article_title = re.sub(' ', '_', title)
+        threaded_article_title, threaded_page_id, threaded_final_text = wiki_api.fetch_article_data(threaded_article_title)
+        threaded_article = Article(threaded_article_title, threaded_page_id, threaded_final_text)
+        threaded_article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
+        threaded_article.get_categories(processor)
+        threaded_article.process_embedding_pipeline(processor)
+        threaded_article.process_metadata_pipeline(processor)
+
+        # Preparing batch records
+        article_record = (uuid.uuid4(), threaded_article.title, threaded_article.text, threaded_article.categories)
+        vector_records = []
+
+        for idx, (threaded_keys, threaded_vector, threaded_encoding, threaded_metadata) in enumerate(zip(threaded_article.text_dict.keys(), threaded_article.embedding_dict.values(), threaded_article.metadata_dict.values())):
+            vector_record = (uuid.uuid4(), article_record[0], threaded_article.title, threaded_vector, threaded_encoding, threaded_metadata)
+            vector_records.append(vector_record)
+
+            if idx % 100 == 0:
+                print(f'IDX: {idx} processed')
+
+        article_table.batch_upsert([article_record])
+        vector_table.batch_upsert(vector_records)
+
+    except Exception as e:
+        print(f'Error processing {title}: {e}')
+
+expanded_articles = expand_article_list(ner_articles)
+wiki_api, processor = WikipediaAPI(), BaseTextProcessor()
+rds_args = (rds_dbname, rds_user, rds_user, rds_password, rds_host, rds_port)
+vector_tbl, article_tbl = VectorTable(*rds_args), ArticleTable(*rds_args)
+THREADED = True
+
+if THREADED:
+    futures = []
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        for article in ner_articles[:5]:
+            futures.append(executor.submit(threaded_article_pipeline, article))
+        for future in as_completed(futures):
+            print(f"Task completed with result: {future.result()}")
+else:
+    for article_title in tqdm(set(expanded_articles), desc='Progress'):
+        article_title = re.sub(' ', '_', article_title)
+        title, page_id, final_text,  = wiki_api.fetch_article_data(article_title)
+        article = Article(title, page_id, final_text)
+        article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
+        article.get_categories(processor)
+        article.process_embedding_pipeline(processor)
+        article.process_metadata_pipeline(processor)
+        for keys, vector, encoding, metadata in zip(article.text_dict.keys(), article.embedding_dict.values(),
+                                                    article.metadata_dict.values()):
+            vector_tbl.add_record(article.title, uuid.uuid4(), vector, encoding, article.categories, metadata)

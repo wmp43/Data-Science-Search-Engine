@@ -128,7 +128,7 @@ class Article:
     title: str
     id: str
     text: str
-    categories: List
+    categories: List = field(default_factory=list)
     text_dict: Dict[str, str] = field(default_factory=dict)  # Text Dict and embedding Dict match on section heading.
     embedding_dict: Dict[str, Tuple] = field(default_factory=dict)  # [0] embedding for vec search -- [1] encoding
     metadata_dict: Dict[str, Dict] = field(default_factory=dict)

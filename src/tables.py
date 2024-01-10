@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
-
+from typing import List, Tuple
 import psycopg2
+from psycopg2.extras import execute_values
 import pandas as pd
 import json
 
@@ -20,11 +21,7 @@ class RelationalDB(ABC):
         pass
 
     @abstractmethod
-    def get_record(self, title: str):
-        pass
-
-    @abstractmethod
-    def update_record(self, title: str):
+    def batch_upsert(self, records: List[Tuple]):
         pass
 
 
@@ -54,22 +51,38 @@ class VectorTable(RelationalDB):
         except psycopg2.Error as e:
             print(f"Unable to connect to the database: {e}")
 
-    def add_record(self, title: str, id: UUID, vector, encoding, categories, metadata):
-        with self.conn.cursor() as cur:
-            cur.execute("INSERT INTO vectors (title, id, vector, encoding, categories, metadata) "
-                        "VALUES (%s, %s, %s, %s, %s, %s)", (title, id, vector, encoding, categories, metadata))
-            self.conn.commit()
+    def add_record(self, id, article_id, title, vector, encoding, metadata):
+        try:
+            with self.conn.cursor() as cur:
+                cur.execute("INSERT INTO vectors (id, article_id, title, vector, encoding, metadata) "
+                            "VALUES (%s, %s, %s, %s, %s, %s)", (id, article_id, title, vector, encoding, metadata))
+                self.conn.commit()
+        except psycopg2.Error as e:
+            print(f"Failed to add record to vectors table: {e}")
 
-    def get_record(self, title: str):
-        # Logic to retrieve a category from the database
-        pass
-
-    def update_record(self, title: str):
-        # Logic to update a category in the database
-        pass
-
-    def add_super_category(self, category_id: int, super_category: str):
-        pass
+    def batch_upsert(self, records: List[Tuple]):
+        query = """
+        INSERT INTO vectors (id, article_id, title, vector, encoding, metadata) 
+        VALUES (%s, %s, %s, %s, %s, %s)
+        ON CONFLICT (id) DO UPDATE 
+        SET article_id = EXCLUDED.article_id, 
+            title = EXCLUDED.title, 
+            vector = EXCLUDED.vector, 
+            encoding = EXCLUDED.encoding, 
+            metadata = EXCLUDED.metadata;
+        """
+        try:
+            with self.conn.cursor() as cur:
+                psycopg2.extras.execute_values(
+                    cur,
+                    query,
+                    records,
+                    template="(%s, %s, %s, %s, %s, %s)",
+                    page_size=100
+                )
+                self.conn.commit()
+        except psycopg2.Error as e:
+            print(f"Failed to batch upsert records to vectors table: {e}")
 
 
 class ArticleTable:
@@ -95,33 +108,36 @@ class ArticleTable:
         except psycopg2.Error as e:
             print(f"Unable to connect to the database: {e}")
 
-    def add_record(self, id, text, title, section, label):
-        """
-        :param id: Id of the record
-        :param text: Resultant Text of the record
-        :param title: Title of the wikipedia article
-        :return: None i gues
-        """
-        with self.conn.cursor() as cur:
-            cur.execute("INSERT INTO articles (id, text, title, section, label) "
-                        "VALUES (%s, %s, %s, %s, %s)", (id, text, section, title, label))
-            self.conn.commit()
+    def add_record(self, id, title, text, categories):
+        try:
+            with self.conn.cursor() as cur:
+                cur.execute("INSERT INTO articles (id, title, text, categories) "
+                            "VALUES (%s, %s, %s, %s)", (id, title, text, categories))
+                self.conn.commit()
+        except psycopg2.Error as e:
+            print(f"Failed to add record to articles table: {e}")
 
-    def get_record(self, title):
+    def batch_upsert(self, records: List[Tuple]):
+        query = """
+        INSERT INTO articles (id, title, text, categories) 
+        VALUES (%s, %s, %s, %s)
+        ON CONFLICT (id) DO UPDATE 
+        SET title = EXCLUDED.title, 
+            text = EXCLUDED.text, 
+            categories = EXCLUDED.categories;
         """
-        :param title: Title to search
-        :return: Record with the title
-        """
-        with self.conn.cursor() as cur:
-            cur.execute("SELECT * FROM articles WHERE title = %s", (title,))
-            return cur.fetchone()
-
-    def print_sample_data(self):
-        with self.conn.cursor() as cur:
-            cur.execute("SELECT * FROM articles")
-            records = cur.fetchall()
-            for record in records:
-                print(record)
+        try:
+            with self.conn.cursor() as cur:
+                psycopg2.extras.execute_values(
+                    cur,
+                    query,
+                    records,
+                    template="(%s, %s, %s, %s)",
+                    page_size=100
+                )
+                self.conn.commit()
+        except psycopg2.Error as e:
+            print(f"Failed to batch upsert records to articles table: {e}")
 
     def get_all_data_pd(self):
         with self.conn.cursor() as cur:
