@@ -17,6 +17,10 @@ app = Flask(__name__)
 
 @app.route('/embeddings_api', methods=['POST'])
 def embeddings_api():
+    """
+    Could Also consider elastic search for DPR. This is likely the more professional option
+    :return:  Embedding Dict
+    """
     article_data = request.json.get('article')
     embed_dict = _build_embeddings(article_data, model)
     return jsonify(embed_dict)
@@ -45,15 +49,14 @@ def ner_api():
     return jsonify(metadata_dict)
 
 
-def _build_ner(article: dict, ner_model):
+def _build_ner(article_text_dict: dict, ner_model):
     ner_dict = {}
-    for idx, (section, content) in enumerate(article.items()):
-        doc = ner_model(content)
-        entities = [(ent.text, ent.label_) for ent in doc.ents]
-        meta_dict = {}
-        for text, label in entities:
-            if text not in meta_dict[label]: meta_dict[label].append(text)
-            else: continue
+    for section, content in article_text_dict.items():
+        doc, meta_dict = ner_model(content), {}
+        for ent in doc.ents:
+            label, text = ent.label, ent.text
+            if label not in meta_dict: meta_dict[label] = []  # init
+            if text not in meta_dict[label]: meta_dict[label].append(text)  # append
         ner_dict[section] = meta_dict
     return ner_dict
 

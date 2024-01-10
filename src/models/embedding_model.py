@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from config import (rds_host, rds_dbname, rds_user, rds_password, rds_port)
-from src.tables import ArticlesTable
+from src.tables import ArticleTable
 import json
 
 """
@@ -25,7 +25,7 @@ Loading and Cleaning of DataFrame
 DATA = True
 
 if DATA:
-    emb_df = ArticlesTable(rds_dbname, rds_user, rds_password, rds_host, rds_port)
+    emb_df = ArticleTable(rds_dbname, rds_user, rds_password, rds_host, rds_port)
     json_obj = emb_df.get_all_data_json()
     emb_df.close_connection()
     with open('doccano_data.jsonl', 'w', encoding='utf-8') as file:

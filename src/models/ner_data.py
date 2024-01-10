@@ -3,7 +3,7 @@ This file will upsert data in a new rds table for developing the embedding model
 """
 from src.base_models import Article
 from src.api import WikipediaAPI
-from src.tables import ArticlesTable
+from src.tables import ArticleTable
 from src.text_processor import BaseTextProcessor
 import spacy
 from spacy.tokens import DocBin
@@ -100,7 +100,7 @@ if INGEST:
     test_pattern_fuzzy = convert_fuzzy_match(ner_pattern, non_fuzzy_list)
     unique_id = -2
     count = 0.0
-    emb_tbl = ArticlesTable(rds_dbname, rds_user, rds_password, rds_host, rds_port)
+    emb_tbl = ArticleTable(rds_dbname, rds_user, rds_password, rds_host, rds_port)
     for TITLE in tqdm(set(ner_articles), desc='Progress'):
         title, page_id, final_text = wiki_api.fetch_article_data(TITLE)
         article = Article(title=title, id=page_id, text=final_text, text_processor=processor)
@@ -127,7 +127,7 @@ The titles in the db are skewed. Title is the text while text is the title...
 
 BUILD_JSONL = False
 if BUILD_JSONL:
-    emb_df = ArticlesTable(rds_dbname, rds_user, rds_password, rds_host, rds_port)
+    emb_df = ArticleTable(rds_dbname, rds_user, rds_password, rds_host, rds_port)
     json_obj = emb_df.get_all_data_json()
     emb_df.close_connection()
     with open('doccano_data.jsonl', 'w', encoding='utf-8') as file:
@@ -144,7 +144,7 @@ Need to distinguish build of training and test data, .3 proba of test .7 proba o
 
 BUILD_SPACY_DATA = True
 if BUILD_SPACY_DATA:
-    emb_df = ArticlesTable(rds_dbname, rds_user, rds_password, rds_host, rds_port)
+    emb_df = ArticleTable(rds_dbname, rds_user, rds_password, rds_host, rds_port)
     art_df = emb_df.get_all_data_pd()
     art_df['label'] = art_df['label'].apply(clean_label)
     training_data = []

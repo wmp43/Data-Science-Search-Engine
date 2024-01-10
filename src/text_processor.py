@@ -154,23 +154,6 @@ class BaseTextProcessor(TextProcessor):
         # print(f'Average Chunk Length: {np.mean(avg_chunk_len)}')
         return sectioned_dict
 
-    # def recursive_chunk_text_dict(self, article: Article, cleaned_section_dict) -> Dict:
-    #     # tiktoken tokenizer
-    #     # Could use Langchain textSplitter
-    #     sectioned_dict = {}
-    #     text_splitter = TokenTextSplitter(chunk_size=460, chunk_overlap=10)
-    #     # Arbitrary chunk size and overlap. also arbitrary splitter
-    #     encoding = tiktoken.get_encoding("cl100k_base")
-    #     for key, value in cleaned_section_dict.items():
-    #
-    #         # split function here
-    #         for idx, chunk in enumerate(chunked_text):
-    #             tokens_integer = encoding.encode(chunk)
-    #             #print(f'Token Length: {len(tokens_integer)} at idx {idx} of {key}')
-    #             print(f'{key}_{idx}')
-    #             sectioned_dict[f'{key}_{idx}'] = chunk
-    #     return sectioned_dict
-
     def build_token_len_dict(self, article: Article) -> str:
         """
         Idea is to tokenize and split content of articles. And to estimate cost of the article
@@ -229,6 +212,25 @@ class BaseTextProcessor(TextProcessor):
             metadata_dict[key] = entities
 
         return metadata_dict
+
+    def build_categories(self, article_title: str):
+        """ Fetch the categories of a Wikipedia page. """
+        try:
+            response = requests.get(
+                'https://en.wikipedia.org/w/api.php',
+                params={
+                    'action': 'query',
+                    'format': 'json',
+                    'titles': article_title,
+                    'prop': 'categories'
+                }
+            ).json()
+            page_id = next(iter(response['query']['pages']))
+            categories = response['query']['pages'][page_id]['categories']
+            return [cat['title'] for cat in categories]
+        except Exception as e:
+            print(f"Error fetching categories for {article_title}: {e}")
+            return []
 
     def build_metadata(self, article: Article, model):
         """

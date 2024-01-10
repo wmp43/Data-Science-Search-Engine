@@ -128,9 +128,10 @@ class Article:
     title: str
     id: str
     text: str
+    categories: List
     text_dict: Dict[str, str] = field(default_factory=dict)  # Text Dict and embedding Dict match on section heading.
     embedding_dict: Dict[str, Tuple] = field(default_factory=dict)  # [0] embedding for vec search -- [1] encoding
-    metadata_dict: Dict[str, List] = field(default_factory=dict)
+    metadata_dict: Dict[str, Dict] = field(default_factory=dict)
     text_processor: any = None
 
     # def print_attribute_types(self):
@@ -173,6 +174,10 @@ class Article:
         """
         metadata_dict = text_processor.build_metadata(self, pattern=ner_pattern)
         self.metadata_dict = metadata_dict
+
+    def get_categories(self, text_processor):
+        cats_list = text_processor.build_categories(self.title)
+        self.categories = cats_list
 
     def process_metadata_labeling(self, text_processor, pattern):
         """

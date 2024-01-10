@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+from uuid import UUID
+
 import psycopg2
 import pandas as pd
 import json
@@ -52,10 +54,10 @@ class VectorTable(RelationalDB):
         except psycopg2.Error as e:
             print(f"Unable to connect to the database: {e}")
 
-    def add_record(self, title, id, vector, encoding, section, metadata):
+    def add_record(self, title: str, id: UUID, vector, encoding, categories, metadata):
         with self.conn.cursor() as cur:
-            cur.execute("INSERT INTO vectors (title, id, vector, encoding, section, metadata) "
-                        "VALUES (%s, %s, %s, %s, %s, %s)", (title, id, vector, encoding, section, metadata))
+            cur.execute("INSERT INTO vectors (title, id, vector, encoding, categories, metadata) "
+                        "VALUES (%s, %s, %s, %s, %s, %s)", (title, id, vector, encoding, categories, metadata))
             self.conn.commit()
 
     def get_record(self, title: str):
@@ -70,7 +72,7 @@ class VectorTable(RelationalDB):
         pass
 
 
-class ArticlesTable:
+class ArticleTable:
     def __init__(self, dbname, user, password, host, port):
         self.dbname = dbname
         self.user = user
