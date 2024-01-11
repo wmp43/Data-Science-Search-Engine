@@ -172,11 +172,11 @@ class Article:
         :param text_processor: TextProcessor object to build metadata
         :return: self
         """
-        metadata_dict = text_processor.build_metadata(self, pattern=ner_pattern)
+        metadata_dict = text_processor.build_metadata(self)
         self.metadata_dict = metadata_dict
 
     def get_categories(self, text_processor):
-        cats_list = text_processor.build_categories(self.title)
+        cats_list = text_processor.build_categories(self)
         self.categories = cats_list
 
     def process_metadata_labeling(self, text_processor, pattern):

@@ -67,7 +67,7 @@ class TextProcessor(ABC):
         pass
 
     @abstractmethod
-    def build_metadata(self, article, model):
+    def build_metadata(self, article):
         pass
 
 
@@ -213,26 +213,27 @@ class BaseTextProcessor(TextProcessor):
 
         return metadata_dict
 
-    def build_categories(self, article_title: str):
-        """ Fetch the categories of a Wikipedia page. """
+    @staticmethod
+    def build_categories(article: Article):
+        """ Fetch the categories of a Wikipedia page and remove 'Category:' prefix. """
         try:
             response = requests.get(
                 'https://en.wikipedia.org/w/api.php',
                 params={
                     'action': 'query',
                     'format': 'json',
-                    'titles': article_title,
+                    'titles': article.title,
                     'prop': 'categories'
                 }
             ).json()
             page_id = next(iter(response['query']['pages']))
-            categories = response['query']['pages'][page_id]['categories']
-            return [cat['title'] for cat in categories]
+            categories = response['query']['pages'][page_id].get('categories', [])
+            return [cat['title'].replace('Category:', '') for cat in categories]
         except Exception as e:
-            print(f"Error fetching categories for {article_title}: {e}")
+            print(f"Error fetching categories for {article.title}: {e}")
             return []
 
-    def build_metadata(self, article: Article, model):
+    def build_metadata(self, article: Article):
         """
         Method: Matches patterns to text and builds the return data structure.
         :param article: Article Object w/ attribute text_dict. {heading_0: text:str, heading_1: text:str}

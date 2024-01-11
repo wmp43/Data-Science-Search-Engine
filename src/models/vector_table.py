@@ -16,7 +16,6 @@ import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
-
 def get_wikitext(page_title):
     """ Fetch the raw wikitext of a Wikipedia page. """
     try:
@@ -73,6 +72,7 @@ def threaded_article_pipeline(title: str, vector_table: VectorTable, article_tab
         threaded_article = Article(threaded_article_title, threaded_page_id, threaded_final_text)
         threaded_article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
         threaded_article.get_categories(processor)
+        print(f'Threaded articles: {threaded_article.categories}')
         threaded_article.process_embedding_pipeline(processor)
         threaded_article.process_metadata_pipeline(processor)
 
@@ -93,9 +93,9 @@ def threaded_article_pipeline(title: str, vector_table: VectorTable, article_tab
     except Exception as e:
         print(f'Error processing {title}: {e}')
 
-expanded_articles = expand_article_list(ner_articles)
+# expanded_articles = expand_article_list(ner_articles)
 wiki_api, processor = WikipediaAPI(), BaseTextProcessor()
-rds_args = (rds_dbname, rds_user, rds_user, rds_password, rds_host, rds_port)
+rds_args = (rds_dbname, rds_user, rds_password, rds_host, rds_port)
 vector_tbl, article_tbl = VectorTable(*rds_args), ArticleTable(*rds_args)
 THREADED = True
 
@@ -103,11 +103,11 @@ if THREADED:
     futures = []
     with ThreadPoolExecutor(max_workers=5) as executor:
         for article in ner_articles[:5]:
-            futures.append(executor.submit(threaded_article_pipeline, article))
+            futures.append(executor.submit(threaded_article_pipeline, article, vector_tbl, article_tbl))
         for future in as_completed(futures):
             print(f"Task completed with result: {future.result()}")
 else:
-    for article_title in tqdm(set(expanded_articles), desc='Progress'):
+    for article_title in tqdm(set(ner_articles), desc='Progress'):
         article_title = re.sub(' ', '_', article_title)
         title, page_id, final_text,  = wiki_api.fetch_article_data(article_title)
         article = Article(title, page_id, final_text)
