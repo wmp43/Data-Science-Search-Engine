@@ -5,6 +5,8 @@ import psycopg2
 from psycopg2.extras import execute_values
 import pandas as pd
 import json
+import traceback
+
 
 
 class RelationalDB(ABC):
@@ -59,11 +61,12 @@ class VectorTable(RelationalDB):
                 self.conn.commit()
         except psycopg2.Error as e:
             print(f"Failed to add record to vectors table: {e}")
+            traceback.print_exc()
 
     def batch_upsert(self, records: List[Tuple]):
         query = """
         INSERT INTO vectors (id, article_id, title, vector, encoding, metadata) 
-        VALUES (%s, %s, %s, %s, %s, %s)
+        VALUES %s
         ON CONFLICT (id) DO UPDATE 
         SET article_id = EXCLUDED.article_id, 
             title = EXCLUDED.title, 
@@ -83,6 +86,7 @@ class VectorTable(RelationalDB):
                 self.conn.commit()
         except psycopg2.Error as e:
             print(f"Failed to batch upsert records to vectors table: {e}")
+            traceback.print_exc()
 
 
 class ArticleTable:
@@ -107,24 +111,26 @@ class ArticleTable:
             print(f'Connected to the database {self.dbname} successfully!')
         except psycopg2.Error as e:
             print(f"Unable to connect to the database: {e}")
+            traceback.print_exc()
 
     def add_record(self, id, title, text, categories):
         try:
             with self.conn.cursor() as cur:
-                cur.execute("INSERT INTO articles (id, title, text, categories) "
-                            "VALUES (%s, %s, %s, %s)", (id, title, text, categories))
+                cur.execute("INSERT INTO articles (id, title, text) "
+                            "VALUES (%s, %s, %s)", (id, title, text))
                 self.conn.commit()
         except psycopg2.Error as e:
             print(f"Failed to add record to articles table: {e}")
+            traceback.print_exc()
 
     def batch_upsert(self, records: List[Tuple]):
         query = """
-        INSERT INTO articles (id, title, text, categories) 
-        VALUES (%s, %s, %s, %s)
+        INSERT INTO articles (id, title, text) 
+        VALUES %s
         ON CONFLICT (id) DO UPDATE 
-        SET title = EXCLUDED.title, 
-            text = EXCLUDED.text, 
-            categories = EXCLUDED.categories;
+        SET 
+            title = EXCLUDED.title, 
+            text = EXCLUDED.text
         """
         try:
             with self.conn.cursor() as cur:
@@ -132,12 +138,13 @@ class ArticleTable:
                     cur,
                     query,
                     records,
-                    template="(%s, %s, %s, %s)",
+                    template="(%s, %s, %s)",
                     page_size=100
                 )
                 self.conn.commit()
         except psycopg2.Error as e:
             print(f"Failed to batch upsert records to articles table: {e}")
+            traceback.print_exc()
 
     def get_all_data_pd(self):
         with self.conn.cursor() as cur:

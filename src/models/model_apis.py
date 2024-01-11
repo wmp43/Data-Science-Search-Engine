@@ -54,7 +54,7 @@ def _build_ner(article_text_dict: dict, ner_model):
     for section, content in article_text_dict.items():
         doc, meta_dict = ner_model(content), {}
         for ent in doc.ents:
-            label, text = ent.label, ent.text
+            label, text = ent.label_, ent.text
             if label not in meta_dict: meta_dict[label] = []  # init
             if text not in meta_dict[label]: meta_dict[label].append(text)  # append
         ner_dict[section] = meta_dict

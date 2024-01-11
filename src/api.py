@@ -13,8 +13,6 @@ import mwclient
 import tiktoken
 import mwparserfromhell
 
-openai_token = os.getenv("openai_token")
-
 
 class WikipediaAPI(BaseModel):
     def fetch_category_data(self, category: str) -> List:  # Wikimedia API Call for categories.
@@ -62,7 +60,7 @@ class WikipediaAPI(BaseModel):
             final_text = re.sub(r' {2}', ' ', spaceless_text)
             title = pages[page_id].get("title", "")
             return title, page_id, final_text
-        
+
         except requests.exceptions.RequestException as e:
             print(f"HTTP Request failed: {e}")
         except Exception as e:
