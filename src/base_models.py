@@ -119,35 +119,25 @@ Vector record
     }
     """
 
+
 @dataclass
 class Article:
     title: str
     id: str
     text: str
-    categories: List = field(default_factory=list)
     text_dict: Dict[str, str] = field(default_factory=dict)  # Text Dict and embedding Dict match on section heading.
     embedding_dict: Dict[str, Tuple] = field(default_factory=dict)  # [0] embedding for vec search -- [1] encoding
     metadata_dict: Dict[str, Dict] = field(default_factory=dict)
     text_processor: any = None
 
-    # def print_attribute_types(self):
-    #     for attribute, value in self.__dict__.items():
-    #         print(f"{attribute} ({type(value)})")
-    #         if isinstance(value, dict):
-    #             for key, val in value.items():
-    #                 print(f"  {key}: {type(val)}")
-    #                 if isinstance(val, dict):  # For nested dictionaries
-    #                     for sub_key, sub_val in val.items():
-    #                         print(f"    {sub_key}: {type(sub_val)}")
-
-    def process_text_pipeline(self, text_processor, exclude_section):
-        text_dict = text_processor.build_section_dict(self, exclude_section)
-        clean_text_dict = text_processor.remove_curly_brackets(text_dict)
-        chunked_text_dict = text_processor.chunk_text_dict(clean_text_dict)
+    def process_text_pipeline(self, exclude_section):
+        text_dict = self.text_processor.build_section_dict(self, exclude_section)
+        clean_text_dict = self.text_processor.remove_curly_brackets(text_dict)
+        chunked_text_dict = self.text_processor.chunk_text_dict(clean_text_dict)
         self.text_dict = chunked_text_dict
         return self
 
-    def process_embedding_pipeline(self, text_processor):
+    def process_embedding_pipeline(self):
         """
         This method may only be invoked after the process_text_pipeline method.
         This will return a dictionary with section headings and token lens for
@@ -155,11 +145,11 @@ class Article:
         :param text_processor: BaseTextProcessor Class
         :return: self
         """
-        embed_dict = text_processor.build_embeddings(self)
+        embed_dict = self.text_processor.build_embeddings(self)
         self.embedding_dict = embed_dict
         return self
 
-    def process_metadata_pipeline(self, text_processor):
+    def process_metadata_pipeline(self):
         """
         December 19th
         https://spacy.io/usage/rule-based-matching
@@ -168,13 +158,22 @@ class Article:
         :param text_processor: TextProcessor object to build metadata
         :return: self
         """
-        metadata_dict = text_processor.build_metadata(self)
+        metadata_dict = self.text_processor.build_metadata(self)
         self.metadata_dict = metadata_dict
         return self
+
 
     def get_categories(self, text_processor):
         cats_list = text_processor.build_categories(self)
         self.categories = cats_list
+
+
+
+
+
+
+
+
 
     def process_metadata_labeling(self, text_processor, pattern):
         """
@@ -183,6 +182,8 @@ class Article:
         """
         entities_dict = text_processor.build_training_metadata(self, pattern)
         self.metadata_dict = entities_dict
+
+
 
     def show_headings(self, text_processor):
         text_processor.extract_headings(self)

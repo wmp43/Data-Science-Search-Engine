@@ -61,5 +61,23 @@ def _build_ner(article_text_dict: dict, ner_model):
     return ner_dict
 
 
+@app.route('/clustering_api', methods=['POST'])
+def clustering_api():
+    article_txt = request.json.get('text')
+    cluster_dict = _build_clusters(article_txt, model)
+    return jsonify(cluster_dict)
+
+
+def _build_clusters(article_text, model):
+    """
+    :param article:
+    :param model: HKU NLP MODEL
+    :return:
+    """
+    enc = tiktoken.get_encoding("cl100k_base")
+    instruction = "Represent the document for clustering:"
+    embeddings = model.encode([[instruction, article_text]])
+
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

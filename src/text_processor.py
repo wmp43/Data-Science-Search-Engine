@@ -213,6 +213,7 @@ class BaseTextProcessor(TextProcessor):
 
         return metadata_dict
 
+
     @staticmethod
     def build_categories(article: Article):
         """ Fetch the categories of a Wikipedia page and remove 'Category:' prefix. """
@@ -251,3 +252,25 @@ class BaseTextProcessor(TextProcessor):
             return embed_dict
         else:
             print("Error in NER API call:", response.status_code, response.text)
+
+
+    # def build_clusters(self, article: Article):
+    #     """
+    #     Method: Matches patterns to text and builds the return data structure.
+    #     :param article: Article Object w/ attribute text_dict. {heading_0: text:str, heading_1: text:str}
+    #     :param  model: The loaded fine-tuned model
+    #     :return List as follows:
+    #     data = [
+    #     ("This is text with important information",[(start_span, end_span, label)]),
+    #     ("important information and I promise it is important",[(start_span, end_span, label), (start_span, end_span, label)])
+    #     ]
+    #     """
+    #     payload, api_url = {'article': article.text_dict}, "http://127.0.0.1:5000/clustering_api"
+    #     response = requests.post(api_url, json=payload)
+    #     if response.status_code == 200:
+    #         embed_dict = response.json()
+    #         return embed_dict
+    #     else:
+    #         print("Error in NER API call:", response.status_code, response.text)
+
+

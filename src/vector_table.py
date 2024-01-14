@@ -12,69 +12,90 @@ from tqdm import tqdm
 from typing import List
 import json
 import uuid
+import pandas as pd
 import re
 import mwparserfromhell
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-def data_validation():
-    # todo: Data Validation Function that certifies upserted records follow data format
-    pass
-
-
-# todo: build functionality for only vector table build and not articles
-def threaded_article_pipeline(title: str, vector_table: VectorTable, article_table: ArticleTable, processor: BaseTextProcessor):
+def cluster_api_call(text):
     try:
-        # Processing the article
-        threaded_article_title = re.sub(' ', '_', title)
-        threaded_article_title, threaded_page_id, threaded_final_text = wiki_api.fetch_article_data_by_title(
-            threaded_article_title)
-        threaded_article = Article(threaded_article_title, threaded_page_id, threaded_final_text, processor)
-        threaded_article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
-        threaded_article.process_embedding_pipeline(processor)
-        threaded_article.process_metadata_pipeline(processor)
+        payload, api_url = {'article': text}, "http://127.0.0.1:5000/clustering_api"
+        response = requests.post(api_url, json=payload)
+        if response.status_code == 200:
+            cluster_vec = response.json()
+            return cluster_vec
+        else:
+            print("Error in clustering API call:", response.status_code, response.text)
+    except Exception as e: print(f'Error {e}'), traceback.print_exc()
 
-        # Preparing batch records
-        article_record = (str(uuid.uuid4()), threaded_article.title, threaded_article.text)
+
+def process_and_update_article_tbl(art_txt, art_id, article_table):
+    """
+    :param art_txt: article text
+    :param article_table: table to update
+    :return:
+    """
+    # Call clustering API
+    try:
+        cvector = cluster_api_call(art_txt)
+        article_table.update_text_cvector(art_txt, cvector, art_id)
+    except Exception as e: print(f'Error {e}'), traceback.print_exc()
+
+
+# todo: Update article tbl with cleaned text and clustering
+def threaded_article_pipeline(article_data: tuple, article_table: ArticleTable, vector_table: VectorTable, processor: BaseTextProcessor):
+    try:
+        # Process Article text -> txt pipe
+        print(article_data)
+        threaded_page_id, threaded_article_title, threaded_final_text = article_data
+        threaded_article = Article(threaded_article_title, threaded_page_id, threaded_final_text, text_processor=processor)
+        threaded_article.process_text_pipeline(SECTIONS_TO_IGNORE)
+
+        # update article tbl with cleaned text
+        cleaned_text = ' '.join([text for _, text in threaded_article.text_dict.items()])
+        process_and_update_article_tbl(cleaned_text, threaded_page_id, article_table)
+
+
+        # process embedding
+        threaded_article.process_embedding_pipeline()
+        # process ner
+        threaded_article.process_metadata_pipeline()
+
         vector_records = []
-
         for idx, (threaded_keys, threaded_vector_tuple, threaded_metadata) in enumerate(zip(threaded_article.text_dict.keys(), threaded_article.embedding_dict.values(), threaded_article.metadata_dict.values())):
             embedding, encoding = threaded_vector_tuple[0][0], threaded_vector_tuple[1]
-            vector_record = (str(uuid.uuid4()), article_record[0], threaded_article.title, embedding, encoding, json.dumps(threaded_metadata))
+            vector_record = (str(uuid.uuid4()), threaded_page_id, threaded_article.title, embedding, encoding, json.dumps(threaded_metadata))
             vector_records.append(vector_record)
 
             if idx % 100 == 0:
                 print(f'IDX: {idx} processed')
 
-        article_table.batch_upsert([article_record])
         vector_table.batch_upsert(vector_records)
 
     except Exception as e:
-        print(f'Error processing {title}: {e}')
+        print(f'Error processing {threaded_article_title}: {e}')
         traceback.print_exc()
 
-# expanded_articles = expand_article_list(ner_articles)
-wiki_api, processor = WikipediaAPI(), BaseTextProcessor()
-rds_args = (rds_dbname, rds_user, rds_password, rds_host, rds_port)
-vector_tbl, article_tbl = VectorTable(*rds_args), ArticleTable(*rds_args)
-THREADED = True
 
-if THREADED:
-    futures = []
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        for article in ner_articles[:5]:
-            futures.append(executor.submit(threaded_article_pipeline, article, vector_tbl, article_tbl, processor))
-        for future in as_completed(futures):
-            print(f"Task completed with result: {future.result()}")
-else:
-    for article_title in tqdm(set(ner_articles), desc='Progress'):
-        article_title = re.sub(' ', '_', article_title)
-        title, page_id, final_text = wiki_api.fetch_article_data_by_title(article_title)
-        article = Article(title, page_id, final_text)
-        article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
-        article.get_categories(processor)
-        article.process_embedding_pipeline(processor)
-        article.process_metadata_pipeline(processor)
-        for keys, vector, encoding, metadata in zip(article.text_dict.keys(), article.embedding_dict.values(),
-                                                    article.metadata_dict.values()):
-            vector_tbl.add_record(article.title, str(uuid.uuid4()), vector, encoding, article.categories, metadata)
+
+def main():
+    wiki_api, processor = WikipediaAPI(), BaseTextProcessor()
+    rds_args = (rds_dbname, rds_user, rds_password, rds_host, rds_port)
+    vector_tbl, article_tbl = VectorTable(*rds_args), ArticleTable(*rds_args)
+    article_df = article_tbl.get_all_data_pd()
+    articles_data = article_df[['id', 'title', 'raw_text']].values.tolist()
+
+    THREADED = True
+    if THREADED:
+        futures = []
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            for article_data in articles_data[:5]:
+                process_and_update_article(article_data, article_tbl, processor, SECTIONS_TO_IGNORE)
+                futures.append(executor.submit(threaded_article_pipeline, article_data, vector_tbl, article_tbl, processor))
+            for future in as_completed(futures):
+                print(f"Task completed with result: {future.result()}")
+
+if __name__ == "__main__":
+    main()
+

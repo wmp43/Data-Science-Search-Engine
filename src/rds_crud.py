@@ -153,6 +153,23 @@ class ArticleTable:
             data = [dict(zip(columns, row)) for row in cur.fetchall()]
         return pd.DataFrame(data)
 
+
+    def update_text_cvector(self, cleaned_text, vector, article_id):
+        try:
+            with self.conn.cursor() as cur:
+                update_query = """
+                UPDATE articles
+                SET text = %s
+                SET clustering_vec = %s
+                WHERE id = %s
+                """
+                cur.execute(update_query, (cleaned_text, vector, article_id))
+                self.conn.commit()
+        except psycopg2.Error as e:
+            print(f"Failed to update cleaned text in articles table: {e}")
+            traceback.print_exc()
+
+
     def get_all_data_json(self):
         df = self.get_all_data_pd()
         json_data = []
