@@ -44,7 +44,7 @@ if INGESTION:
     wiki_api = WikipediaAPI()
     processor = BaseTextProcessor()
 
-    title, page_id, final_text = wiki_api.fetch_article_data(TITLE)
+    title, page_id, final_text = wiki_api.fetch_article_data_by_title(TITLE)
     article = Article(title=TITLE, id=page_id, text=final_text, text_processor=processor)
     article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
     article.process_embedding_pipeline(processor)

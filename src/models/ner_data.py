@@ -102,7 +102,7 @@ if INGEST:
     count = 0.0
     emb_tbl = ArticleTable(rds_dbname, rds_user, rds_password, rds_host, rds_port)
     for TITLE in tqdm(set(ner_articles), desc='Progress'):
-        title, page_id, final_text = wiki_api.fetch_article_data(TITLE)
+        title, page_id, final_text = wiki_api.fetch_article_data_by_title(TITLE)
         article = Article(title=title, id=page_id, text=final_text, text_processor=processor)
         article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
         article.process_metadata_labeling(processor, test_pattern_fuzzy)

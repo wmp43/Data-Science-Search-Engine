@@ -48,7 +48,7 @@ if NER_TEST:
     wiki_api = WikipediaAPI()
     processor = BaseTextProcessor()
     WIKI = 'Cluster_analysis'
-    title, page_id, final_text = wiki_api.fetch_article_data(WIKI)
+    title, page_id, final_text = wiki_api.fetch_article_data_by_title(WIKI)
     article = Article(title=title, id=page_id, text=final_text, text_processor=processor)
     article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
     concat_text = str([re.sub(r'[\n\t]+', ' ', text) for text in article.text_dict.values()])

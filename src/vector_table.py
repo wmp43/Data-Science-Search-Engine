@@ -27,7 +27,8 @@ def threaded_article_pipeline(title: str, vector_table: VectorTable, article_tab
     try:
         # Processing the article
         threaded_article_title = re.sub(' ', '_', title)
-        threaded_article_title, threaded_page_id, threaded_final_text = wiki_api.fetch_article_data(threaded_article_title)
+        threaded_article_title, threaded_page_id, threaded_final_text = wiki_api.fetch_article_data_by_title(
+            threaded_article_title)
         threaded_article = Article(threaded_article_title, threaded_page_id, threaded_final_text, processor)
         threaded_article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
         threaded_article.process_embedding_pipeline(processor)
@@ -68,7 +69,7 @@ if THREADED:
 else:
     for article_title in tqdm(set(ner_articles), desc='Progress'):
         article_title = re.sub(' ', '_', article_title)
-        title, page_id, final_text = wiki_api.fetch_article_data(article_title)
+        title, page_id, final_text = wiki_api.fetch_article_data_by_title(article_title)
         article = Article(title, page_id, final_text)
         article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
         article.get_categories(processor)

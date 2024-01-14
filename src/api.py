@@ -37,18 +37,52 @@ class WikipediaAPI(BaseModel):
                          data['query']['categorymembers']]
         return response_list
 
-    def fetch_article_data(self, article_title):
+    def fetch_article_data_by_title(self, article_title):
         URL = "https://en.wikipedia.org/w/api.php"
         PARAMS = {
             "action": "query",
             "prop": "extracts",
             "titles": article_title,
             "explaintext": True,
-            "format": "json"
+            "format": "json",
+            "redirects": 1
         }
         try:
             response = requests.get(url=URL, params=PARAMS)
             data = response.json()
+            pages = data["query"]["pages"]
+
+            page_id = next(iter(pages))
+            content = pages[page_id].get("extract", "")
+            tokens = content.split()
+            cleaned_tokens = [token for token in tokens]
+            cleaned_text = ' '.join(cleaned_tokens)
+            spaceless_text = re.sub(r'[\n\t]+', '', cleaned_text)
+            final_text = re.sub(r' {2}', ' ', spaceless_text)
+            title = pages[page_id].get("title", "")
+            if not final_text: print(data)
+            return title, page_id, final_text
+        except requests.exceptions.RequestException as e:
+            print(f"HTTP Request failed: {e}")
+        except Exception as e:
+            print(f"Error processing article data: {e}")
+
+        return None, None, None
+
+    def fetch_article_data_by_id(self, article_id):
+        URL = "https://en.wikipedia.org/w/api.php"
+        PARAMS = {
+            'action': 'query',
+            'format': 'json',
+            'pageids': article_id,
+            'prop': 'revisions',
+            'rvprop': 'content',  # Include the content of the revision
+            'rvslots': 'main'  # This is needed to fetch the main content slot of the page
+        }
+        try:
+            response = requests.get(url=URL, params=PARAMS)
+            data = response.json()
+            print(data)
             pages = data["query"]["pages"]
 
             page_id = next(iter(pages))
