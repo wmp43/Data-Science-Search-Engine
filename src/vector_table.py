@@ -5,10 +5,11 @@ processing pipeline to upsert to vector table
 import traceback
 from src.base_models import Article
 from src.api import WikipediaAPI
-from src.tables import ArticleTable, VectorTable
+from src.rds_crud import ArticleTable, VectorTable
 from src.text_processor import BaseTextProcessor
 from config import (rds_host, rds_dbname, rds_user, rds_password, rds_port, ner_articles, SECTIONS_TO_IGNORE)
 from tqdm import tqdm
+from typing import List
 import json
 import uuid
 import re
@@ -16,55 +17,12 @@ import mwparserfromhell
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-
-def get_wikitext(page_title):
-    """ Fetch the raw wikitext of a Wikipedia page. """
-    try:
-        response = requests.get(
-            'https://en.wikipedia.org/w/api.php',
-            params={
-                'action': 'query',
-                'format': 'json',
-                'titles': page_title,
-                'prop': 'revisions',
-                'rvprop': 'content'
-            }
-        ).json()
-        page = next(iter(response['query']['pages'].values()))
-        if 'revisions' in page:
-            return page['revisions'][0]['*']
-    except Exception as e:
-        print(f"Error fetching wikitext for {page_title}: {e}")
-    return ""
-
-
-def extract_see_also(wikitext):
-    """ Extract 'See also' section using mwparserfromhell. """
-    parsed = mwparserfromhell.parse(wikitext)
-    for section in parsed.get_sections(levels=[2]):
-        heading = section.filter_headings()[0].title.strip()
-        if heading == "See also":
-            return [link.title.strip_code().strip() for link in section.filter_wikilinks()]
-    return []
-
-
-def expand_article_list(original_list):
-    """ Expand the article list based on 'See also' sections. """
-    expanded_list = set(original_list)  # Use a set to avoid duplicates
-    for art in original_list:
-        wikitext = get_wikitext(art)
-        if wikitext:
-            see_also_titles = extract_see_also(wikitext)
-            expanded_list.update(see_also_titles)
-    return list(expanded_list)
-
-
 def data_validation():
     # todo: Data Validation Function that certifies upserted records follow data format
     pass
 
 
-# todo: reset articles table to store categories, text, and title
+# todo: build functionality for only vector table build and not articles
 def threaded_article_pipeline(title: str, vector_table: VectorTable, article_table: ArticleTable, processor: BaseTextProcessor):
     try:
         # Processing the article

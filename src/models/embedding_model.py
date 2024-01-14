@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from config import (rds_host, rds_dbname, rds_user, rds_password, rds_port)
-from src.tables import ArticleTable
+from src.rds_crud import ArticleTable
 import json
 
 """

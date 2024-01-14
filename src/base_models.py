@@ -7,7 +7,6 @@ from nltk.tokenize import word_tokenize
 from typing import List, Dict, Any, Optional, Tuple
 from config import ner_pattern, non_fuzzy_list
 from pydantic import BaseModel
-from src.text_processor import BaseTextProcessor, TextProcessor
 
 
 """
@@ -120,10 +119,6 @@ Vector record
     }
     """
 
-
-
-
-
 @dataclass
 class Article:
     title: str
@@ -133,7 +128,7 @@ class Article:
     text_dict: Dict[str, str] = field(default_factory=dict)  # Text Dict and embedding Dict match on section heading.
     embedding_dict: Dict[str, Tuple] = field(default_factory=dict)  # [0] embedding for vec search -- [1] encoding
     metadata_dict: Dict[str, Dict] = field(default_factory=dict)
-    text_processor: TextProcessor = BaseTextProcessor
+    text_processor: any = None
 
     # def print_attribute_types(self):
     #     for attribute, value in self.__dict__.items():

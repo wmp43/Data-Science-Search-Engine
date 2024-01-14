@@ -3,7 +3,7 @@ This file will upsert data in a new rds table for developing the embedding model
 """
 from src.base_models import Article
 from src.api import WikipediaAPI
-from src.tables import ArticleTable
+from src.rds_crud import ArticleTable
 from src.text_processor import BaseTextProcessor
 import spacy
 from spacy.tokens import DocBin
@@ -12,7 +12,7 @@ from tqdm import tqdm
 from typing import List, Dict
 import json
 import uuid
-import random
+import _
 import re
 from collections import defaultdict
 
