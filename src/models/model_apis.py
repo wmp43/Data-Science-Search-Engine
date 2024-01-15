@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import tiktoken  # Assuming this is a module you have for encoding
 from InstructorEmbedding import INSTRUCTOR
 import spacy
+import traceback
 import numpy as np
 
 """
@@ -64,19 +65,23 @@ def _build_ner(article_text_dict: dict, ner_model):
 @app.route('/clustering_api', methods=['POST'])
 def clustering_api():
     article_txt = request.json.get('text')
-    cluster_dict = _build_clusters(article_txt, model)
-    return jsonify(cluster_dict)
+    cluster_arr = _build_clusters(article_txt, model)
+    if isinstance(cluster_arr, np.ndarray):
+        cluster_arr = cluster_arr.tolist()
+        return jsonify(cluster_arr)
+    else:
+        return jsonify({'error': 'Failed to process clustering'}), 500
 
 
 def _build_clusters(article_text, model):
-    """
-    :param article:
-    :param model: HKU NLP MODEL
-    :return:
-    """
-    enc = tiktoken.get_encoding("cl100k_base")
-    instruction = "Represent the document for clustering:"
-    embeddings = model.encode([[instruction, article_text]])
+    try:
+        instruction = "Represent the technical document for clustering:"
+        embeddings = model.encode([[instruction, article_text]])
+        return embeddings
+    except Exception as e:
+        print(f'Clustering Error (_build_clusters): {e}')
+        traceback.print_exc()  # This will print the full traceback
+        return None
 
 
 if __name__ == '__main__':

@@ -159,8 +159,9 @@ class ArticleTable:
             with self.conn.cursor() as cur:
                 update_query = """
                 UPDATE articles
-                SET text = %s
-                SET clustering_vec = %s
+                SET 
+                    text = %s,
+                    clustering_vec = %s
                 WHERE id = %s
                 """
                 cur.execute(update_query, (cleaned_text, vector, article_id))

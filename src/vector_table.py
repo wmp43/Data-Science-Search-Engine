@@ -20,7 +20,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 def cluster_api_call(text):
     try:
-        payload, api_url = {'article': text}, "http://127.0.0.1:5000/clustering_api"
+        payload, api_url = {'text': text}, "http://127.0.0.1:5000/clustering_api"
         response = requests.post(api_url, json=payload)
         if response.status_code == 200:
             cluster_vec = response.json()
@@ -39,20 +39,24 @@ def process_and_update_article_tbl(art_txt, art_id, article_table):
     # Call clustering API
     try:
         cvector = cluster_api_call(art_txt)
+        print(cvector)
+        if isinstance(cvector, list) and isinstance(cvector[0], list):
+            cvector = [item for sublist in cvector for item in sublist]
         article_table.update_text_cvector(art_txt, cvector, art_id)
-    except Exception as e: print(f'Error {e}'), traceback.print_exc()
+    except Exception as e:
+        print(f'Error {e}')
+        traceback.print_exc()
 
 
 # todo: Update article tbl with cleaned text and clustering
-def threaded_article_pipeline(article_data: tuple, article_table: ArticleTable, vector_table: VectorTable, processor: BaseTextProcessor):
+def threaded_article_pipeline(article_data, article_table: ArticleTable, vector_table: VectorTable, processor: BaseTextProcessor):
     try:
         # Process Article text -> txt pipe
-        print(article_data)
         threaded_page_id, threaded_article_title, threaded_final_text = article_data
         threaded_article = Article(threaded_article_title, threaded_page_id, threaded_final_text, text_processor=processor)
         threaded_article.process_text_pipeline(SECTIONS_TO_IGNORE)
 
-        # update article tbl with cleaned text
+        # update article tbl with cleaned text & clustering vec
         cleaned_text = ' '.join([text for _, text in threaded_article.text_dict.items()])
         process_and_update_article_tbl(cleaned_text, threaded_page_id, article_table)
 
@@ -90,11 +94,10 @@ def main():
     if THREADED:
         futures = []
         with ThreadPoolExecutor(max_workers=5) as executor:
-            for article_data in articles_data[:5]:
-                process_and_update_article(article_data, article_tbl, processor, SECTIONS_TO_IGNORE)
-                futures.append(executor.submit(threaded_article_pipeline, article_data, vector_tbl, article_tbl, processor))
+            for article_data in tqdm(articles_data):
+                futures.append(executor.submit(threaded_article_pipeline, article_data, article_tbl, vector_tbl, processor))
             for future in as_completed(futures):
-                print(f"Task completed with result: {future.result()}")
+                print(f"Task completed with result")
 
 if __name__ == "__main__":
     main()
