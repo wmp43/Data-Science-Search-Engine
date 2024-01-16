@@ -1,12 +1,20 @@
 from flask import Flask
+from src.base_models import Query
+from src.query_processor import BaseQueryProcessor
+from src.rds_crud import VectorTable
+from config import rds_user, rds_password, rds_host, rds_port, rds_dbname
 
 app = Flask(__name__)
-
+rds_args = (rds_dbname, rds_user, rds_password, rds_host, rds_port)
 
 @app.route('/search', methods=['POST'])
-def query():  # put application's code here
-    # Flask Endpoint For Wiki Search Home
-    return 'Hello World!'
+def search():
+    # user -> query -> expanded -> embedded -> results -> re ranked -> LLM Res
+    # this may be super slow....
+    bqp, vec_tbl = BaseQueryProcessor(), VectorTable(*rds_args)
+    input = Query(query, bqp)
+    expanded = input.expand_query().encode_query()
+
 
 
 @app.route('/visualize')

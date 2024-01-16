@@ -7,6 +7,9 @@ from nltk.tokenize import word_tokenize
 from typing import List, Dict, Any, Optional, Tuple
 from config import ner_pattern, non_fuzzy_list
 from pydantic import BaseModel
+import plotly.express as px
+from sklearn.manifold import TSNE
+
 
 
 """
@@ -223,15 +226,83 @@ class Query(BaseModel):
 
     """
     text: str
+    query_processor: any = None  # This should really be a QueryProcessor class
+    vector_tbl: any = None
+    embedding: any = None  # Encoding for the query
+    results: any = None
 
-    def encode_query(self):
-        # embed the query
-        # search the db for cosine_sim argmax
-        pass
 
-    def expand_query(self):
+    def process(self):
         """
-        Expand the query for more specific retrieval
-        :return: Expanded Query
+        from text to embedding
+        :return: None
+        """
+        query_expanded = self.query_processor.expand_query(self.text)
+        query_embedded = self.query_processor.embed_query(query_expanded)
+        self.embedding = query_embedded
+
+    def execute(self):
+        """
+        sends self.embedding to vector table
+        :param vector_tbl:
+        :return: results -- what dtype?
+        """
+        self.vector_tbl.query_vectors(self.embedding)
+        # Must return dtype with top n results
+        # pandas df?
+        return None
+
+
+    def re_ranker(self):
+        """
+        Re rank results from the returned db
+        :return:
+        """
+        self.query_processor.rerank(self.embedding)
+
+
+class Visualizer(BaseModel):
+    """
+    This class should take in result records from a query and visualize them.
+    Not exactly sure if I need a full class for this but lets see
+    """
+    records: List[Tuple]  # Imagining each tuple as a record that is returned
+
+    def _reduce_dims(self):
+        """
+        Takes records and reduces the dims down to visualize level
+        :return: Matrix of 2/3 dims
+        """
+        dim_reduc = TSNE(n_components=3, random_state=42)
+        res = dim_reduc.fit_transform(self.records)
+        rec1, rec2, rec3 = self.records[:, 0], self.records[:, 1], self.records[:, 2]
+        return np.array([rec1, rec2, rec3])
+
+    def plot_scatter(self):
+        reduced_matrix = self._reduce_dims()
+        px.scatter_3d(reduced_matrix[0], reduced_matrix[1], reduced_matrix[2])
+
+    def plot_graph(self):
+        """
+        Extract ner and built network viz based on it
+        src.visuaization.py is going to be ref here
+        :return:
+        """
+        """
+        def add_to_graph(graph, article_data):
+    graph.add_node(article_data["title"], type='article')
+    for cat in article_data["metadata"]["categories"]:
+        graph.add_node(cat, type='category')
+        graph.add_edge(article_data["title"], cat)
+    for person in article_data["metadata"]["mentioned_people"]:
+        graph.add_node(person, type='person')
+        graph.add_edge(article_data["title"], person)
+    for place in article_data["metadata"]["mentioned_places"]:
+        graph.add_node(place, type='place')
+        graph.add_edge(article_data["title"], place)
+    for topic in article_data["metadata"]["mentioned_topics"]:
+        graph.add_node(topic, type='topic')
+        graph.add_edge(article_data["title"], topic)
+        
         """
         pass

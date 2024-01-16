@@ -1,5 +1,5 @@
 """
-This file will upsert data in a new rds table for developing the embedding model
+File was used to built labelled ner data
 """
 from src.base_models import Article
 from src.api import WikipediaAPI
@@ -12,7 +12,7 @@ from tqdm import tqdm
 from typing import List, Dict
 import json
 import uuid
-import _
+import random
 import re
 from collections import defaultdict
 

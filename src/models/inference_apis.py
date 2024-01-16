@@ -29,7 +29,7 @@ def embeddings_api():
 
 def _build_embeddings(article: dict, model):
     enc = tiktoken.get_encoding("cl100k_base")
-    instruction = "Represent the technical paragraph for retrieval:"
+    instruction = "Represent the technical paragraph for retrieval: "
     embed_dict = {}
     for idx, (section, content) in enumerate(article.items()):
         encodings = enc.encode(content)
@@ -75,12 +75,34 @@ def clustering_api():
 
 def _build_clusters(article_text, model):
     try:
-        instruction = "Represent the technical document for clustering:"
+        instruction = "Represent the technical document for clustering: "
         embeddings = model.encode([[instruction, article_text]])
         return embeddings
     except Exception as e:
         print(f'Clustering Error (_build_clusters): {e}')
         traceback.print_exc()  # This will print the full traceback
+        return None
+
+
+@app.route('/query_api', methods=['POST'])
+def query_api():
+    query = request.json.get('query')
+    cluster_arr = _build_query(query, model)
+    if isinstance(cluster_arr, np.ndarray):
+        cluster_arr = cluster_arr.tolist()
+        return jsonify(cluster_arr)
+    else:
+        return jsonify({'error': 'Failed to process clustering'}), 500
+
+
+def _build_query(query, model):
+    try:
+        instruction = "Represent the question for retrieving supporting documents: "
+        embeddings = model.encode([[instruction, query]])
+        return embeddings
+    except Exception as e:
+        print(f'Query Error (_build_query): {e}')
+        traceback.print_exc()
         return None
 
 
