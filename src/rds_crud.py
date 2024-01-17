@@ -87,6 +87,18 @@ class VectorTable(RelationalDB):
             print(f"Failed to batch upsert records to vectors table: {e}")
             traceback.print_exc()
 
+    def query_vectors(self, embedding, top_n=10):
+        try:
+            with self.conn.cursor() as cur:
+                query = "SELECT title, text, metadata, vector FROM vectors ORDER BY vector <-> %s::vector LIMIT %s;"
+                cur.execute(query, (embedding, top_n))
+                results = cur.fetchall()
+                return results
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return []
+
+
 
 class ArticleTable:
     def __init__(self, dbname, user, password, host, port):

@@ -8,9 +8,12 @@ from typing import List, Dict, Any, Optional, Tuple
 from config import ner_pattern, non_fuzzy_list
 from pydantic import BaseModel
 import plotly.express as px
+import tiktoken
 from sklearn.manifold import TSNE
-
-
+import json
+import networkx as nx
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
 
 """
 vector = {
@@ -165,18 +168,9 @@ class Article:
         self.metadata_dict = metadata_dict
         return self
 
-
     def get_categories(self, text_processor):
         cats_list = text_processor.build_categories(self)
         self.categories = cats_list
-
-
-
-
-
-
-
-
 
     def process_metadata_labeling(self, text_processor, pattern):
         """
@@ -185,8 +179,6 @@ class Article:
         """
         entities_dict = text_processor.build_training_metadata(self, pattern)
         self.metadata_dict = entities_dict
-
-
 
     def show_headings(self, text_processor):
         text_processor.extract_headings(self)
@@ -221,25 +213,29 @@ class Article:
         return Article(**data)
 
 
-class Query(BaseModel):
+@dataclass
+class Query:
     """
 
     """
     text: str
     query_processor: any = None  # This should really be a QueryProcessor class
-    vector_tbl: any = None
-    embedding: any = None  # Encoding for the query
+    vector_tbl: any = None  # this should be VectorTable class
+    embedding: any = None
     results: any = None
-
 
     def process(self):
         """
         from text to embedding
         :return: None
         """
-        query_expanded = self.query_processor.expand_query(self.text)
-        query_embedded = self.query_processor.embed_query(query_expanded)
-        self.embedding = query_embedded
+        EXPAND = False
+        if EXPAND:
+            query_expanded = self.query_processor.expand_query(self.text)
+            query_embedded = self.query_processor.embed_query(query_expanded)
+        else:
+            query_embedded = self.query_processor.embed_query(self.text)
+        self.embedding = query_embedded[0]
 
     def execute(self):
         """
@@ -247,62 +243,71 @@ class Query(BaseModel):
         :param vector_tbl:
         :return: results -- what dtype?
         """
-        self.vector_tbl.query_vectors(self.embedding)
-        # Must return dtype with top n results
-        # pandas df?
-        return None
-
+        res_list = self.vector_tbl.query_vectors(self.embedding)  # optionally top-n returns
+        self.results = res_list
+        # returns list of tuples:
+        # [("Title 1", "Encoding 1", "Metadata 1", "Vector 1"),
+        # ("Title 2", "Encoding 2", "Metadata 2", "Vector 2")]
 
     def re_ranker(self):
         """
         Re rank results from the returned db
         :return:
         """
-        self.query_processor.rerank(self.embedding)
+        reranked_res = self.query_processor.rerank(self.text, self.results)
+        print(reranked_res)
+        self.results = reranked_res
 
 
-class Visualizer(BaseModel):
-    """
-    This class should take in result records from a query and visualize them.
-    Not exactly sure if I need a full class for this but lets see
-    """
-    records: List[Tuple]  # Imagining each tuple as a record that is returned
+class Visualization:
+    def __init__(self, query_results):
+        self.query_results = query_results
+        self.graph = nx.Graph()
 
-    def _reduce_dims(self):
-        """
-        Takes records and reduces the dims down to visualize level
-        :return: Matrix of 2/3 dims
-        """
-        dim_reduc = TSNE(n_components=3, random_state=42)
-        res = dim_reduc.fit_transform(self.records)
-        rec1, rec2, rec3 = self.records[:, 0], self.records[:, 1], self.records[:, 2]
-        return np.array([rec1, rec2, rec3])
-
-    def plot_scatter(self):
-        reduced_matrix = self._reduce_dims()
-        px.scatter_3d(reduced_matrix[0], reduced_matrix[1], reduced_matrix[2])
+    def _process_metadata(self):
+        """Process metadata and add edges to the graph."""
+        for _, _, metadata_str in self.query_results:
+            if metadata_str:  # Check if metadata is not empty
+                metadata = json.loads(metadata_str)  # Convert JSON string to dict
+                for key, values in metadata.items():
+                    for value in values:
+                        self.graph.add_edge(key, value)
 
     def plot_graph(self):
+        """Plot the graph using NetworkX."""
+        self._process_metadata()  # Process metadata and construct the graph
+        plt.figure(figsize=(10, 8))
+        nx.draw(self.graph, with_labels=True)
+        plt.show()
+
+
+class QueryVisualization:
+    def __init__(self, query_results):
+        self.query_results = query_results
+        self.graph = nx.Graph()
+
+    def _reduce_dimensions(self, vectors, method='PCA', n_components=3):
         """
-        Extract ner and built network viz based on it
-        src.visuaization.py is going to be ref here
-        :return:
+        Reduce the dimensions of the vectors to 3 using PCA or t-SNE.
         """
+        if method == 'PCA':
+            model = PCA(n_components=n_components)
+        elif method == 'TSNE':
+            model = TSNE(n_components=n_components)
+        else:
+            raise ValueError("Invalid dimensionality reduction method")
+
+        reduced_vectors = model.fit_transform(vectors)
+        return reduced_vectors
+
+    def plot_3d_scatter_plotly(self, reduction_method='PCA'):
         """
-        def add_to_graph(graph, article_data):
-    graph.add_node(article_data["title"], type='article')
-    for cat in article_data["metadata"]["categories"]:
-        graph.add_node(cat, type='category')
-        graph.add_edge(article_data["title"], cat)
-    for person in article_data["metadata"]["mentioned_people"]:
-        graph.add_node(person, type='person')
-        graph.add_edge(article_data["title"], person)
-    for place in article_data["metadata"]["mentioned_places"]:
-        graph.add_node(place, type='place')
-        graph.add_edge(article_data["title"], place)
-    for topic in article_data["metadata"]["mentioned_topics"]:
-        graph.add_node(topic, type='topic')
-        graph.add_edge(article_data["title"], topic)
-        
+        Plot a 3D scatter plot of the vectors using dimensionality reduction with Plotly Express.
         """
-        pass
+        vectors = [json.loads(vec_str) for _, _, _, vec_str in self.query_results if vec_str]
+        vectors = np.array(vectors)
+        reduced_vectors = self._reduce_dimensions(vectors, method=reduction_method)
+        fig = px.scatter_3d(reduced_vectors, x=0, y=1, z=2,
+                            title="3D Scatter Plot",
+                            labels={'0': 'Reduced Dim 1', '1': 'Reduced Dim 2', '2': 'Reduced Dim 3'})
+        fig.show()
