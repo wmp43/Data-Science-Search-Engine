@@ -259,11 +259,16 @@ class Query:
         self.results = reranked_res
 
 
-class Visualization:
+class QueryVisualization:
     def __init__(self, query_results):
         self.query_results = query_results
         self.graph = nx.Graph()
 
+
+    """
+    Network Viz
+    """
+    #todo: make sure this works. Check out vizualizations.py
     def _process_metadata(self):
         """Process metadata and add edges to the graph."""
         for _, _, metadata_str in self.query_results:
@@ -280,12 +285,9 @@ class Visualization:
         nx.draw(self.graph, with_labels=True)
         plt.show()
 
-
-class QueryVisualization:
-    def __init__(self, query_results):
-        self.query_results = query_results
-        self.graph = nx.Graph()
-
+    """
+    Scatter vizualtion
+    """
     def _reduce_dimensions(self, vectors, method='PCA', n_components=3):
         """
         Reduce the dimensions of the vectors to 3 using PCA or t-SNE.
