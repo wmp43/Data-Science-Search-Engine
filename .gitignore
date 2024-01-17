@@ -1,6 +1,4 @@
 .env
-static/*
-templates/*
 Neo4j-a77672ab-Created-2023-11-16.txt
 wemburs_test.py
 dsse
