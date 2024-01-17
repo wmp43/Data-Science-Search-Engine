@@ -7,13 +7,7 @@ from nltk.tokenize import word_tokenize
 from typing import List, Dict, Any, Optional, Tuple
 from config import ner_pattern, non_fuzzy_list
 from pydantic import BaseModel
-import plotly.express as px
-import tiktoken
-from sklearn.manifold import TSNE
-import json
-import networkx as nx
-import matplotlib.pyplot as plt
-from sklearn.decomposition import PCA
+
 
 """
 vector = {
@@ -215,14 +209,13 @@ class Article:
 
 @dataclass
 class Query:
-    """
-
-    """
     text: str
     query_processor: any = None  # This should really be a QueryProcessor class
+    query_visualizer: any = None
     vector_tbl: any = None  # this should be VectorTable class
     embedding: any = None
     results: any = None
+
 
     def process(self):
         """
@@ -243,7 +236,7 @@ class Query:
         :param vector_tbl:
         :return: results -- what dtype?
         """
-        res_list = self.vector_tbl.query_vectors(self.embedding)  # optionally top-n returns
+        res_list = self.vector_tbl.query_vectors(self.embedding, top_n=20)
         self.results = res_list
         # returns list of tuples:
         # [("Title 1", "Encoding 1", "Metadata 1", "Vector 1"),
@@ -254,62 +247,10 @@ class Query:
         Re rank results from the returned db
         :return:
         """
+        print(f'starting query.obj.re_ranker()')
         reranked_res = self.query_processor.rerank(self.text, self.results)
         print(reranked_res)
         self.results = reranked_res
 
-
-class QueryVisualization:
-    def __init__(self, query_results):
-        self.query_results = query_results
-        self.graph = nx.Graph()
-
-
-    """
-    Network Viz
-    """
-    #todo: make sure this works. Check out vizualizations.py
-    def _process_metadata(self):
-        """Process metadata and add edges to the graph."""
-        for _, _, metadata_str in self.query_results:
-            if metadata_str:  # Check if metadata is not empty
-                metadata = json.loads(metadata_str)  # Convert JSON string to dict
-                for key, values in metadata.items():
-                    for value in values:
-                        self.graph.add_edge(key, value)
-
-    def plot_graph(self):
-        """Plot the graph using NetworkX."""
-        self._process_metadata()  # Process metadata and construct the graph
-        plt.figure(figsize=(10, 8))
-        nx.draw(self.graph, with_labels=True)
-        plt.show()
-
-    """
-    Scatter vizualtion
-    """
-    def _reduce_dimensions(self, vectors, method='PCA', n_components=3):
-        """
-        Reduce the dimensions of the vectors to 3 using PCA or t-SNE.
-        """
-        if method == 'PCA':
-            model = PCA(n_components=n_components)
-        elif method == 'TSNE':
-            model = TSNE(n_components=n_components)
-        else:
-            raise ValueError("Invalid dimensionality reduction method")
-
-        reduced_vectors = model.fit_transform(vectors)
-        return reduced_vectors
-
-    def plot_3d_scatter_plotly(self, reduction_method='PCA'):
-        """
-        Plot a 3D scatter plot of the vectors using dimensionality reduction with Plotly Express.
-        """
-        vectors = [json.loads(vec_str) for _, _, _, vec_str in self.query_results if vec_str]
-        vectors = np.array(vectors)
-        reduced_vectors = self._reduce_dimensions(vectors, method=reduction_method)
-        fig = px.scatter_3d(reduced_vectors, x=0, y=1, z=2,
-                            title="3D Scatter Plot",
-                            labels={'0': 'Reduced Dim 1', '1': 'Reduced Dim 2', '2': 'Reduced Dim 3'})
-        fig.show()
+    def network_graph(self):
+        self.query_visualizer.plot_graph(self.results)
