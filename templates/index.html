@@ -7,13 +7,15 @@
 </head>
 <body>
     <header>
-        Header section! This is a header for the Data Science Search Engine
+        Data Science Search Engine
     </header>
 
     <main>
         <section id="search-section">
-            <input type="text" id="search-bar" placeholder="What is Data Science">
-            <button id="search-btn">Search</button>
+            <form action="/search" method="post">
+        <input type="text" name="query" id="search-bar" placeholder="What is Data Science" />
+        <button type="submit" id="search-btn">Search</button>
+            </form>
         </section>
 
         <section id="query-viz-container">

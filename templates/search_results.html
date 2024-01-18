@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search Results</title>
+</head>
+<body>
+    <h1>Search Results</h1>
+    {% if results %}
+        <ul>
+            {% for title, text, _, _ in results %}
+                <li>
+                    <h2>{{ title }}</h2>
+                    <p>{{ text }}</p>
+                    <a href="https://en.wikipedia.org/wiki/{{ title.replace(' ', '_') }}" target="_blank">Read more on Wikipedia</a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No results found.</p>
+    {% endif %}
+</body>
+</html>
