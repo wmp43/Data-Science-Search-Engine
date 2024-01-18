@@ -12,7 +12,7 @@ from sklearn.decomposition import PCA
 
 
 
-df = pd.read_csv('/Users/owner/myles-personal-env/Projects/wikiSearch/src/ingestion/category_classification/dataframes/embedding_df.csv')
+df = pd.read_csv('//src/ingestion/category_classification/dataframes/embedding_df.csv')
 df['Label'].fillna(0, inplace=True)
 X = df.drop(columns=['Label', 'Cleaned_Category', 'Index'])
 # pca = PCA(n_components=10)

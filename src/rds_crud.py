@@ -201,3 +201,210 @@ class ArticleTable:
         if self.conn is not None:
             self.conn.close()
 
+
+class QueryTable:
+    # todo: Build query table with user_id, Query, Expanded_Query, Vector, response_text
+    # Can use this to build more visualizations
+    def __init__(self, dbname, user, password, host, port):
+        self.dbname = dbname
+        self.user = user
+        self.password = password
+        self.host = host
+        self.port = port
+        self.conn = None
+        self._connect()
+
+    def _connect(self):
+        try:
+            self.conn = psycopg2.connect(
+                dbname=self.dbname,
+                user=self.user,
+                password=self.password,
+                host=self.host,
+                port=self.port
+            )
+            print(f'Connected to the database {self.dbname} successfully!')
+        except psycopg2.Error as e:
+            print(f"Unable to connect to the database: {e}")
+            traceback.print_exc()
+
+    def add_record(self, id, query, vector, response_text):
+        try:
+            with self.conn.cursor() as cur:
+                cur.execute("INSERT INTO queries (id, query, vector, response_text)"
+                            "VALUES (%s, %s, %s, %s)", (id, query, vector, response_text))
+                self.conn.commit()
+        except psycopg2.Error as e:
+            print(f"Failed to add record to articles table: {e}")
+            traceback.print_exc()
+
+    def batch_upsert(self, records: List[Tuple]):
+        query = """
+        INSERT INTO queries (id, query, vector, response_text) 
+        VALUES %s
+        ON CONFLICT (id) DO UPDATE 
+        SET 
+            title = EXCLUDED.title, 
+            text = EXCLUDED.text
+        """
+        try:
+            with self.conn.cursor() as cur:
+                psycopg2.extras.execute_values(
+                    cur,
+                    query,
+                    records,
+                    template="(%s, %s, %s)",
+                    page_size=100
+                )
+                self.conn.commit()
+        except psycopg2.Error as e:
+            print(f"Failed to batch upsert records to articles table: {e}")
+            traceback.print_exc()
+
+    def get_all_data_pd(self):
+        with self.conn.cursor() as cur:
+            cur.execute("SELECT * FROM articles")
+            columns = [desc[0] for desc in cur.description]
+            print(columns)
+            data = [dict(zip(columns, row)) for row in cur.fetchall()]
+        return pd.DataFrame(data)
+
+
+    def update_text_cvector(self, cleaned_text, vector, article_id):
+        try:
+            with self.conn.cursor() as cur:
+                update_query = """
+                UPDATE articles
+                SET 
+                    text = %s,
+                    clustering_vec = %s
+                WHERE id = %s
+                """
+                cur.execute(update_query, (cleaned_text, vector, article_id))
+                self.conn.commit()
+        except psycopg2.Error as e:
+            print(f"Failed to update cleaned text in articles table: {e}")
+            traceback.print_exc()
+
+
+    def get_all_data_json(self):
+        df = self.get_all_data_pd()
+        json_data = []
+        for _, row in df.iterrows():
+            text = row['text']
+            labels = json.loads(row['label']) if isinstance(row['label'], str) else row['label']
+            json_obj = {
+                "text": text,
+                "label": labels
+            }
+            json_data.append(json_obj)
+
+        return json_data
+
+    def close_connection(self):
+        if self.conn is not None:
+            self.conn.close()
+
+
+class UserTable:
+    # todo: Build users table to track users usage.
+    # Lets make this a product
+    def __init__(self, dbname, user, password, host, port):
+        self.dbname = dbname
+        self.user = user
+        self.password = password
+        self.host = host
+        self.port = port
+        self.conn = None
+        self._connect()
+
+    def _connect(self):
+        try:
+            self.conn = psycopg2.connect(
+                dbname=self.dbname,
+                user=self.user,
+                password=self.password,
+                host=self.host,
+                port=self.port
+            )
+            print(f'Connected to the database {self.dbname} successfully!')
+        except psycopg2.Error as e:
+            print(f"Unable to connect to the database: {e}")
+            traceback.print_exc()
+
+    def add_record(self, id, query, vector, response_text):
+        try:
+            with self.conn.cursor() as cur:
+                cur.execute("INSERT INTO queries (id, query, vector, response_text)"
+                            "VALUES (%s, %s, %s, %s)", (id, query, vector, response_text))
+                self.conn.commit()
+        except psycopg2.Error as e:
+            print(f"Failed to add record to articles table: {e}")
+            traceback.print_exc()
+
+    def batch_upsert(self, records: List[Tuple]):
+        query = """
+        INSERT INTO queries (id, query, vector, response_text) 
+        VALUES %s
+        ON CONFLICT (id) DO UPDATE 
+        SET 
+            title = EXCLUDED.title, 
+            text = EXCLUDED.text
+        """
+        try:
+            with self.conn.cursor() as cur:
+                psycopg2.extras.execute_values(
+                    cur,
+                    query,
+                    records,
+                    template="(%s, %s, %s)",
+                    page_size=100
+                )
+                self.conn.commit()
+        except psycopg2.Error as e:
+            print(f"Failed to batch upsert records to articles table: {e}")
+            traceback.print_exc()
+
+    def get_all_data_pd(self):
+        with self.conn.cursor() as cur:
+            cur.execute("SELECT * FROM articles")
+            columns = [desc[0] for desc in cur.description]
+            print(columns)
+            data = [dict(zip(columns, row)) for row in cur.fetchall()]
+        return pd.DataFrame(data)
+
+
+    def update_text_cvector(self, cleaned_text, vector, article_id):
+        try:
+            with self.conn.cursor() as cur:
+                update_query = """
+                UPDATE articles
+                SET 
+                    text = %s,
+                    clustering_vec = %s
+                WHERE id = %s
+                """
+                cur.execute(update_query, (cleaned_text, vector, article_id))
+                self.conn.commit()
+        except psycopg2.Error as e:
+            print(f"Failed to update cleaned text in articles table: {e}")
+            traceback.print_exc()
+
+
+    def get_all_data_json(self):
+        df = self.get_all_data_pd()
+        json_data = []
+        for _, row in df.iterrows():
+            text = row['text']
+            labels = json.loads(row['label']) if isinstance(row['label'], str) else row['label']
+            json_obj = {
+                "text": text,
+                "label": labels
+            }
+            json_data.append(json_obj)
+
+        return json_data
+
+    def close_connection(self):
+        if self.conn is not None:
+            self.conn.close()

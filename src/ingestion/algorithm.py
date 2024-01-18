@@ -6,10 +6,6 @@ from collections import deque
 import uuid
 # I wish there was a dynamic way to visualize this working, like
 
-
-
-
-
 while list_of_categories:
 
     CAT1, CAT2, CAT3 = Category("meta_category", uuid.uuid4(), "Statistics"), Category("meta_category", uuid.uuid4(), "Machine_Learning"), Category("meta_category", uuid.uuid4(), "Operation_research")

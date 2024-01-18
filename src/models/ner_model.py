@@ -52,7 +52,7 @@ if NER_TEST:
     article = Article(title=title, id=page_id, text=final_text, text_processor=processor)
     article.process_text_pipeline(processor, SECTIONS_TO_IGNORE)
     concat_text = str([re.sub(r'[\n\t]+', ' ', text) for text in article.text_dict.values()])
-    ner_model = spacy.load('/Users/owner/myles-personal-env/Projects/wikiSearch/src/models/model-best')
+    ner_model = spacy.load('//src/models/model-best')
     doc = ner_model(concat_text)
     doc.user_data["title"] = 'Wikipedia Article: ' + WIKI + ' w/ ner tags'
     colors = {

@@ -45,7 +45,7 @@ def _build_embeddings(article: dict, model):
 @app.route('/ner_api', methods=['POST'])
 def ner_api():
     article_data = request.json.get('article')
-    ner_model = spacy.load('/Users/owner/myles-personal-env/Projects/wikiSearch/src/models/model-best')
+    ner_model = spacy.load('//src/models/model-best')
     metadata_dict = _build_ner(article_data, ner_model)
     return jsonify(metadata_dict)
 
