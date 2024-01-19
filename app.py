@@ -24,14 +24,17 @@ def index():
 
 @app.route('/search', methods=['POST'])
 def search():
-    search_term = request.form['query']
+    data = request.json
+    search_term = data['query']
+    if not search_term: return "Search Term is Required", 400
     if not search_term: return "Search Term is Required", 400
     app.logger.info(f'Search requested for term: {search_term}')
     qp, qv = BaseQueryProcessor(), QueryVisualizer()
+    # todo query table in db
     query_obj = Query(search_term, qp, qv, vec_tbl, embedding=[], results=[])
     query_obj.process()
     query_obj.execute()
-    return render_template('search_results.html', results=query_obj.results)
+    return jsonify(query_obj.results)
 
 
 # @app.route('/api/visualize/query')

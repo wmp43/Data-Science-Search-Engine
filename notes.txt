@@ -1,0 +1,14 @@
+Meta-Goals
+- Set up Login and Users table
+- Experiment with papers (https://arxiv.org/pdf/2212.10496.pdf)
+-
+
+
+January 18th
+- Set up frontend
+    - html, css, d3.js
+- Link frontend to backend endpoints
+    - /search
+    - /visualize
+
+January 19th
