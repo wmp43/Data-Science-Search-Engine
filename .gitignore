@@ -10,3 +10,4 @@ text_cleaning_tests/
 /src/models/test.spacy
 /src/models/config_original.cfg
 /src/attempt.py
+/clean.py

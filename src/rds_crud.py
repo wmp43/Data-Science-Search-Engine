@@ -98,6 +98,15 @@ class VectorTable(RelationalDB):
             print(f"An error occurred: {e}")
             return []
 
+    def get_all_data_pd(self):
+        # vector tbl
+        with self.conn.cursor() as cur:
+            cur.execute("SELECT * FROM vectors")
+            columns = [desc[0] for desc in cur.description]
+            print(columns)
+            data = [dict(zip(columns, row)) for row in cur.fetchall()]
+        return pd.DataFrame(data)
+
 
 
 class ArticleTable:
@@ -158,6 +167,7 @@ class ArticleTable:
             traceback.print_exc()
 
     def get_all_data_pd(self):
+        # Article Table
         with self.conn.cursor() as cur:
             cur.execute("SELECT * FROM articles")
             columns = [desc[0] for desc in cur.description]
@@ -239,8 +249,9 @@ class QueryTable:
             traceback.print_exc()
 
     def get_all_data_pd(self):
+        # Query Table
         with self.conn.cursor() as cur:
-            cur.execute("SELECT * FROM articles")
+            cur.execute("SELECT * FROM queries")
             columns = [desc[0] for desc in cur.description]
             print(columns)
             data = [dict(zip(columns, row)) for row in cur.fetchall()]
@@ -310,13 +321,16 @@ class UserTable:
             print(f"Failed to batch upsert records to articles table: {e}")
             traceback.print_exc()
 
-    def get_all_data_pd(self):
-        with self.conn.cursor() as cur:
-            cur.execute("SELECT * FROM articles")
-            columns = [desc[0] for desc in cur.description]
-            print(columns)
-            data = [dict(zip(columns, row)) for row in cur.fetchall()]
-        return pd.DataFrame(data)
+
+    # todo: build user table
+    # def get_all_data_pd(self):
+    #     # User Table
+    #     with self.conn.cursor() as cur:
+    #         cur.execute("SELECT * FROM users")
+    #         columns = [desc[0] for desc in cur.description]
+    #         print(columns)
+    #         data = [dict(zip(columns, row)) for row in cur.fetchall()]
+    #     return pd.DataFrame(data)
 
 
     def update_text_cvector(self, cleaned_text, vector, article_id):
