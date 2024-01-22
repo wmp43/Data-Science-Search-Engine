@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 from src.base_models import Query
 from src.query_processor import BaseQueryProcessor, QueryVisualizer
-from src.rds_crud import VectorTable, ArticleTable
+from src.rds_crud import VectorTable, ArticleTable, QueryTable
 from config import rds_user, rds_password, rds_host, rds_port, rds_dbname
 import logging
 from InstructorEmbedding import INSTRUCTOR
@@ -12,7 +12,7 @@ app = Flask(__name__)
 logging.basicConfig(filename='app.log', level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]')
 rds_args = (rds_dbname, rds_user, rds_password, rds_host, rds_port)
-vec_tbl, art_tbl = VectorTable(*rds_args), ArticleTable(*rds_args)
+vec_tbl, art_tbl, qry_tbl = VectorTable(*rds_args), ArticleTable(*rds_args), QueryTable(*rds_args)
 model = INSTRUCTOR('hkunlp/instructor-large')
 
 
@@ -27,13 +27,16 @@ def search():
     data = request.json
     search_term = data['query']
     if not search_term: return "Search Term is Required", 400
-    if not search_term: return "Search Term is Required", 400
     app.logger.info(f'Search requested for term: {search_term}')
     qp, qv = BaseQueryProcessor(), QueryVisualizer()
-    # todo query table in db
-    query_obj = Query(search_term, qp, qv, vec_tbl, embedding=[], results=[])
+    """
+    QueryTable insert
+    """
+    query_obj = Query(search_term, qp, qv, vec_tbl, qry_tbl, embedding=[], results=[])
     query_obj.process()
     query_obj.execute()
+    query_obj.query_to_tbl()
+    # todo: return LLM Response not just table of res
     return jsonify(query_obj.results)
 
 

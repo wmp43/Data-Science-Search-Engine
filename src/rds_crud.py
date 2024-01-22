@@ -228,37 +228,14 @@ class QueryTable:
             print(f"Unable to connect to the database: {e}")
             traceback.print_exc()
 
-    def add_record(self, id, query, vector, response_text):
+    def add_record(self, raw_query, embedded_query, transformed_query, response, id):
         try:
             with self.conn.cursor() as cur:
-                cur.execute("INSERT INTO queries (id, query, vector, response_text)"
-                            "VALUES (%s, %s, %s, %s)", (id, query, vector, response_text))
+                cur.execute("INSERT INTO queries (raw_query, embedded_query, transformed_query, response, id)"
+                            "VALUES (%s, %s, %s, %s)", (raw_query, embedded_query, transformed_query, response, id))
                 self.conn.commit()
         except psycopg2.Error as e:
             print(f"Failed to add record to articles table: {e}")
-            traceback.print_exc()
-
-    def batch_upsert(self, records: List[Tuple]):
-        query = """
-        INSERT INTO queries (id, query, vector, response_text) 
-        VALUES %s
-        ON CONFLICT (id) DO UPDATE 
-        SET 
-            title = EXCLUDED.title, 
-            text = EXCLUDED.text
-        """
-        try:
-            with self.conn.cursor() as cur:
-                psycopg2.extras.execute_values(
-                    cur,
-                    query,
-                    records,
-                    template="(%s, %s, %s)",
-                    page_size=100
-                )
-                self.conn.commit()
-        except psycopg2.Error as e:
-            print(f"Failed to batch upsert records to articles table: {e}")
             traceback.print_exc()
 
     def get_all_data_pd(self):
@@ -268,38 +245,6 @@ class QueryTable:
             print(columns)
             data = [dict(zip(columns, row)) for row in cur.fetchall()]
         return pd.DataFrame(data)
-
-
-    def update_text_cvector(self, cleaned_text, vector, article_id):
-        try:
-            with self.conn.cursor() as cur:
-                update_query = """
-                UPDATE articles
-                SET 
-                    text = %s,
-                    clustering_vec = %s
-                WHERE id = %s
-                """
-                cur.execute(update_query, (cleaned_text, vector, article_id))
-                self.conn.commit()
-        except psycopg2.Error as e:
-            print(f"Failed to update cleaned text in articles table: {e}")
-            traceback.print_exc()
-
-
-    def get_all_data_json(self):
-        df = self.get_all_data_pd()
-        json_data = []
-        for _, row in df.iterrows():
-            text = row['text']
-            labels = json.loads(row['label']) if isinstance(row['label'], str) else row['label']
-            json_obj = {
-                "text": text,
-                "label": labels
-            }
-            json_data.append(json_obj)
-
-        return json_data
 
     def close_connection(self):
         if self.conn is not None:

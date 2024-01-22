@@ -7,7 +7,7 @@ from nltk.tokenize import word_tokenize
 from typing import List, Dict, Any, Optional, Tuple
 from config import ner_pattern, non_fuzzy_list
 from pydantic import BaseModel
-
+import uuid
 
 """
 vector = {
@@ -209,11 +209,13 @@ class Article:
 
 @dataclass
 class Query:
-    text: str
+    raw_query: str
+    expanded_query: any = None
     query_processor: any = None  # This should really be a QueryProcessor class
-    query_visualizer: any = None
+    query_visualizer: any = None  # query visualizer class
     vector_tbl: any = None  # this should be VectorTable class
-    embedding: any = None
+    query_tbl: any = None  # tbl with the queries
+    embedding: any = None  #
     results: any = None
 
 
@@ -224,10 +226,11 @@ class Query:
         """
         EXPAND = False
         if EXPAND:
-            query_expanded = self.query_processor.expand_query(self.text)
+            query_expanded = self.query_processor.expand_query(self.raw_query)
+            self.expanded_query = query_expanded
             query_embedded = self.query_processor.embed_query(query_expanded)
         else:
-            query_embedded = self.query_processor.embed_query(self.text)
+            query_embedded = self.query_processor.embed_query(self.raw_query)
         self.embedding = query_embedded[0]
 
     def execute(self):
@@ -247,10 +250,18 @@ class Query:
         Re rank results from the returned db
         :return:
         """
-        print(f'starting query.obj.re_ranker()')
-        reranked_res = self.query_processor.rerank(self.text, self.results)
-        print(reranked_res)
-        self.results = reranked_res
+        EXPAND = False
+        if EXPAND: ranked_results = self.query_processor.rerank(self.expanded_query, self.results)
+        else: ranked_results = self.query_processor.rerank(self.raw_query, self.results)
+        self.results = ranked_results
 
     def network_graph(self):
         self.query_visualizer.plot_graph(self.results)
+
+    def query_to_tbl(self):
+        self.query_tbl.add_record(self.raw_query,  # raw query
+                                  self.embedding,  # embedding
+                                  self.expanded_query,  # Expanded query if using Hyde
+                                  " This should be the LLM response",
+                                  # todo: LLM response. Deploy to Sagemaker w/ api call?
+                                  uuid.uuid4())
