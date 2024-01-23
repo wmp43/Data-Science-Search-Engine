@@ -241,7 +241,7 @@ class QueryTable:
     def add_record(self, raw_query, embedded_query, transformed_query, response, id):
         try:
             with self.conn.cursor() as cur:
-                cur.execute("INSERT INTO queries (raw_query, embedded_query, transformed_query, response, id)"
+                cur.execute("INSERT INTO queries (raw_query, embedded_query, transformed_query, lm_response, id)"
                             "VALUES (%s, %s, %s, %s)", (raw_query, embedded_query, transformed_query, response, id))
                 self.conn.commit()
         except psycopg2.Error as e:
