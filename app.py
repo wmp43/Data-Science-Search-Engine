@@ -33,9 +33,10 @@ def search():
     QueryTable insert
     """
     query_obj = Query(search_term, qp, qv, vec_tbl, qry_tbl, embedding=[], results=[])
-    query_obj.process()
-    query_obj.execute()
-    query_obj.query_to_tbl()
+    query_obj.process()  # builds an embedding for the query using qp
+    query_obj.execute()  # Queries the db with vec_tbl
+    query_obj.language_model()
+    query_obj.query_to_tbl()  # Adds raw query, embedding,
     # todo: return LLM Response not just table of res
     return jsonify(query_obj.results)
 
@@ -88,4 +89,4 @@ def _build_query(query, model):
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(port=5005, host='0.0.0.0')

@@ -41,8 +41,9 @@ class BaseQueryProcessor(QueryProcessor):
     """
     def expand_query(self, query: str) -> str:
         """
-        Expand query for better results
-        :return: string?
+        prompt = 'you are a data science instructor, write a passage to answer the question'
+        HyDE: which is query -> prompt + query to lm -> res
+        :return: response from lm
         """
         pass
 
@@ -57,7 +58,7 @@ class BaseQueryProcessor(QueryProcessor):
         ("important information and I promise it is important",[(start_span, end_span, label), (start_span, end_span, label)])
         ]
         """
-        payload, api_url = {'query': query}, "http://127.0.0.1:5000/query_api"
+        payload, api_url = {'query': query}, "http://127.0.0.1:5010/query_api"
         response = requests.post(api_url, json=payload)
         if response.status_code == 200:
             embedded_q = response.json()
@@ -78,6 +79,12 @@ class BaseQueryProcessor(QueryProcessor):
         results = co.rerank(query=query, documents=documents, top_n=10, model="rerank-multilingual-v2.0")
         # todo: return these results to table on frontend
         return results
+
+    def call_language_model(self, context_len=2) -> str:
+        """todo: ensure this was correct placement of langauge model call"""
+        #  Pass context length of returned articles and query or expanded_query depending
+
+
 
 
 class QueryVisualizer:

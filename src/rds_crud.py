@@ -87,7 +87,7 @@ class VectorTable(RelationalDB):
             print(f"Failed to batch upsert records to vectors table: {e}")
             traceback.print_exc()
 
-    def query_vectors(self, embedding, top_n):
+    def query_vectors(self, embedding, top_n) -> List[Tuple]:
         try:
             with self.conn.cursor() as cur:
                 query = "SELECT title, text, metadata, vector FROM vectors ORDER BY vector <-> %s::vector LIMIT %s;"

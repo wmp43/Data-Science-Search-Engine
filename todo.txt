@@ -1,0 +1,11 @@
+High to Low priority
+1. Built out effective query visualization class
+2. Langauge model whether its chatgpt api or sagemaker deployment needs to be done.
+    - This needs to be implemented in inference_apis.py
+    - Current call will be placed as method under Query.QueryProcessor.call_language_model()
+3. Implement gliner for ner
+
+
+Notes:
+Hyde can be used for query expansion. It is really asking lm answer with no ground truth, then embed lm res, then find similarity measures.
+

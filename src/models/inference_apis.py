@@ -42,15 +42,36 @@ def _build_embeddings(article: dict, model):
     return embed_dict
 
 
-@app.route('/ner_api', methods=['POST'])
-def ner_api():
+@app.route('/spacy_ner_api', methods=['POST'])
+def spacy_ner_api():
     article_data = request.json.get('article')
     ner_model = spacy.load('//src/models/model-best')
-    metadata_dict = _build_ner(article_data, ner_model)
+    metadata_dict = _build_spacy_ner(article_data, ner_model)
     return jsonify(metadata_dict)
 
 
-def _build_ner(article_text_dict: dict, ner_model):
+def _build_spacy_ner(article_text_dict: dict, ner_model):
+    ner_dict = {}
+    for section, content in article_text_dict.items():
+        doc, meta_dict = ner_model(content), {}
+        for ent in doc.ents:
+            label, text = ent.label_, ent.text
+            if label not in meta_dict: meta_dict[label] = []  # init
+            if text not in meta_dict[label]: meta_dict[label].append(text)  # append
+        ner_dict[section] = meta_dict
+    return ner_dict
+
+
+@app.route('gliner_ner_api', methods=['POST'])
+def gliner_ner_api():
+    # todo: implement gliner for ner. Future builds
+    article_data = request.json.get('article')
+    #ner_model = model.load('GliNER')
+    #metadata_dict = _build_spacy_ner(article_data, ner_model)
+    #return jsonify(metadata_dict)
+    pass
+
+def _build_gliner_ner(article_text_dict: dict, ner_model):
     ner_dict = {}
     for section, content in article_text_dict.items():
         doc, meta_dict = ner_model(content), {}
@@ -107,4 +128,4 @@ def _build_query(query, model):
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(port=5010)

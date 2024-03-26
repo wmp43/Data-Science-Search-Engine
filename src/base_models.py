@@ -215,8 +215,9 @@ class Query:
     query_visualizer: any = None  # query visualizer class
     vector_tbl: any = None  # this should be VectorTable class
     query_tbl: any = None  # tbl with the queries
-    embedding: any = None  #
-    results: any = None
+    embedding: any = None   # embedding from model
+    language_results: str = None  # results from language_model(vector search + query)
+    search_results: str = None   #
 
 
     def process(self):
@@ -226,6 +227,7 @@ class Query:
         """
         EXPAND = False
         if EXPAND:
+            # todo: implement query expansion
             query_expanded = self.query_processor.expand_query(self.raw_query)
             self.expanded_query = query_expanded
             query_embedded = self.query_processor.embed_query(query_expanded)
@@ -239,8 +241,9 @@ class Query:
         :param vector_tbl:
         :return: results -- what dtype?
         """
-        res_list = self.vector_tbl.query_vectors(self.embedding, top_n=20)
-        self.results = res_list
+        search_res_list = self.vector_tbl.query_vectors(self.embedding, top_n=20)
+        # returns a list of tuples need to figure out what is in each tuple to pass correct items
+        self.search_results = search_res_list
         # returns list of tuples:
         # [("Title 1", "Encoding 1", "Metadata 1", "Vector 1"),
         # ("Title 2", "Encoding 2", "Metadata 2", "Vector 2")]
@@ -253,10 +256,18 @@ class Query:
         EXPAND = False
         if EXPAND: ranked_results = self.query_processor.rerank(self.expanded_query, self.results)
         else: ranked_results = self.query_processor.rerank(self.raw_query, self.results)
-        self.results = ranked_results
+        self.search_results = ranked_results
 
     def network_graph(self):
         self.query_visualizer.plot_graph(self.results)
+
+
+    def language_model(self):
+        # Calls the language model and returns a string
+        response = self.query_processor.call_langauge_model(self.search_results, )
+        self.language_results = response
+
+
 
     def query_to_tbl(self):
         self.query_tbl.add_record(self.raw_query,  # raw query
@@ -265,3 +276,5 @@ class Query:
                                   " This should be the LLM response",
                                   # todo: LLM response. Deploy to Sagemaker w/ api call?
                                   uuid.uuid4())
+
+
