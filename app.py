@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 from src.base_models import Query
-from src.query_processor import BaseQueryProcessor, QueryVisualizer
+from src.query_processor import QueryProcessor, QueryVisualizer
 from src.rds_crud import VectorTable, ArticleTable, QueryTable
 from config import rds_user, rds_password, rds_host, rds_port, rds_dbname
 import logging
@@ -28,17 +28,25 @@ def search():
     search_term = data['query']
     if not search_term: return "Search Term is Required", 400
     app.logger.info(f'Search requested for term: {search_term}')
-    qp, qv = BaseQueryProcessor(), QueryVisualizer()
+    qp, qv = QueryProcessor(), QueryVisualizer()
     """
     QueryTable insert
     """
     query_obj = Query(search_term, qp, qv, vec_tbl, qry_tbl, embedding=[], results=[])
     query_obj.process()  # builds an embedding for the query using qp
     query_obj.execute()  # Queries the db with vec_tbl
-    query_obj.language_model()
-    query_obj.query_to_tbl()  # Adds raw query, embedding,
     # todo: return LLM Response not just table of res
-    return jsonify(query_obj.results)
+    # query_obj.language_model() # invokes lang model response
+    query_obj.network_graph()
+    query_obj.query_to_tbl()  # Adds raw query, embedding, and other query information to query table
+
+
+    concat_res = (query_obj.language_results, query_obj.search_results, query_obj.query_visualizer)
+    # for each search there should be returned:
+    # lang results: str
+    # search results: list of tuples
+    # visualization network viz of query
+    return jsonify(concat_res)
 
 
 # @app.route('/api/visualize/query')

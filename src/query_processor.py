@@ -6,6 +6,7 @@ from config import COHERE_API_KEY
 import plotly.express as px
 from sklearn.manifold import TSNE
 import json
+import plotly.graph_objs as go
 import networkx as nx
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
@@ -13,7 +14,7 @@ import matplotlib.patches as mpatches
 import numpy as np
 
 
-class QueryProcessor(ABC):
+class BaseQueryProcessor(ABC):
     """
     Article:TextProcessor
     as
@@ -33,12 +34,13 @@ class QueryProcessor(ABC):
         pass
 
 
-class BaseQueryProcessor(QueryProcessor):
+class QueryProcessor(BaseQueryProcessor):
     """
     This class implements the ABC of QueryProcessor
     Using an Abstract Base Class allows us to experiment with a few different methods
     of query expansion
     """
+
     def expand_query(self, query: str) -> str:
         """
         prompt = 'you are a data science instructor, write a passage to answer the question'
@@ -85,8 +87,6 @@ class BaseQueryProcessor(QueryProcessor):
         #  Pass context length of returned articles and query or expanded_query depending
 
 
-
-
 class QueryVisualizer:
     def __init__(self):
         self.graph = nx.Graph()
@@ -104,6 +104,7 @@ class QueryVisualizer:
     """
     Network Viz
     """
+
     # def _process_metadata(self, query_results):
     #     for title, _, metadata_str, _ in query_results:  # Unpacking four values
     #         if isinstance(metadata_str, dict):
@@ -124,11 +125,14 @@ class QueryVisualizer:
         """Process metadata and add edges to the graph."""
         for title, _, metadata_str, _ in query_results:
             if isinstance(metadata_str, str):
-                try: metadata = json.loads(metadata_str)
-                except json.JSONDecodeError: continue
+                try:
+                    metadata = json.loads(metadata_str)
+                except json.JSONDecodeError:
+                    continue
             elif isinstance(metadata_str, dict):
                 metadata = metadata_str
-            else: continue  # Skip if metadata_str is neither dict nor str
+            else:
+                continue  # Skip if metadata_str is neither dict nor str
             self.graph.add_node(title, type='article')
 
             # Iterate through each metadata category and add nodes and edges
@@ -152,10 +156,52 @@ class QueryVisualizer:
         legend_handles = [mpatches.Patch(color=color, label=label) for label, color in self.color_map.items()]
         plt.legend(handles=legend_handles, loc='upper left')
         plt.show()
+        # figure out how to pass this graph to show users
+
+    def plot_graph_plotly(self, query_results):
+        self._process_metadata(query_results)
+
+        pos = nx.spring_layout(self.graph, dim=3)
+
+        edge_trace = go.Scatter3d(x=[], y=[], z=[], hoverinfo='none', mode='lines')
+        node_trace = go.Scatter3d(x=[], y=[], z=[], mode='markers+text', text=[], hoverinfo='text')
+
+        for edge in self.graph.edges():
+            x0, y0, z0 = pos[edge[0]]
+            x1, y1, z1 = pos[edge[1]]
+
+            new_x = list(edge_trace['x']) + [x0, x1, None]
+            new_y = list(edge_trace['y']) + [y0, y1, None]
+            new_z = list(edge_trace['z']) + [z0, z1, None]
+
+            edge_trace['x'] = new_x
+            edge_trace['y'] = new_y
+            edge_trace['z'] = new_z
+
+        for node in self.graph.nodes():
+            x, y, z = pos[node]
+
+            # Convert to list, add new items, and reassign
+            new_x = list(node_trace['x']) + [x]
+            new_y = list(node_trace['y']) + [y]
+            new_z = list(node_trace['z']) + [z]
+            new_text = list(node_trace['text']) + [node]  # Assuming 'node' is the text you want to append
+
+            node_trace['x'] = new_x
+            node_trace['y'] = new_y
+            node_trace['z'] = new_z
+            node_trace['text'] = new_text
+
+        fig = go.Figure(data=[edge_trace, node_trace])
+        fig.update_layout(scene=dict(xaxis=dict(showgrid=False),
+                                     yaxis=dict(showgrid=False),
+                                     zaxis=dict(showgrid=False)))
+        fig.show()
 
     """
     Scatter vizualtion
     """
+
     def _reduce_dimensions(self, vectors, method='PCA', n_components=3):
         """
         Reduce the dimensions of the vectors to 3 using PCA or t-SNE.
@@ -181,5 +227,3 @@ class QueryVisualizer:
                             title="3D Scatter Plot",
                             labels={'0': 'Reduced Dim 1', '1': 'Reduced Dim 2', '2': 'Reduced Dim 3'})
         fig.show()
-
-

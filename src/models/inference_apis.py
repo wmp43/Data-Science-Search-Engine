@@ -66,10 +66,11 @@ def _build_spacy_ner(article_text_dict: dict, ner_model):
 def gliner_ner_api():
     # todo: implement gliner for ner. Future builds
     article_data = request.json.get('article')
-    #ner_model = model.load('GliNER')
-    #metadata_dict = _build_spacy_ner(article_data, ner_model)
-    #return jsonify(metadata_dict)
+    # ner_model = model.load('GliNER')
+    # metadata_dict = _build_spacy_ner(article_data, ner_model)
+    # return jsonify(metadata_dict)
     pass
+
 
 def _build_gliner_ner(article_text_dict: dict, ner_model):
     ner_dict = {}

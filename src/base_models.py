@@ -217,7 +217,7 @@ class Query:
     query_tbl: any = None  # tbl with the queries
     embedding: any = None   # embedding from model
     language_results: str = None  # results from language_model(vector search + query)
-    search_results: str = None   #
+    search_results: List = None   #
 
 
     def process(self):
@@ -259,7 +259,10 @@ class Query:
         self.search_results = ranked_results
 
     def network_graph(self):
-        self.query_visualizer.plot_graph(self.results)
+        self.query_visualizer.plot_graph(self.search_results)
+
+    def plotly_network_graph(self):
+        self.query_visualizer.plot_graph_plotly(self.search_results)
 
 
     def language_model(self):

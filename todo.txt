@@ -1,5 +1,14 @@
 High to Low priority
-1. Built out effective query visualization class
+1. Built out effective query visualization class for both chunks and articles.
+    - I had a good way to do this before but currently forget.
+    Query Bar: What is deep learning
+    Language model response: Depp learning is ...
+    Search Response: table of relevant articles
+    Visualization:
+        1. chunk visualization with metadata
+        2. article visualization idk if we have metadata for this
+
+
 2. Langauge model whether its chatgpt api or sagemaker deployment needs to be done.
     - This needs to be implemented in inference_apis.py
     - Current call will be placed as method under Query.QueryProcessor.call_language_model()
