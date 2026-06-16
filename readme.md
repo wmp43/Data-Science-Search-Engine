@@ -13,7 +13,6 @@
    - Tech Used: Fine-tuned LLM
 3. Version Control
    - txt/pdf flavor of classical version control -- remaking git for text documents (literally Google Drive)
-   - I will probably learn more about programming/swe from this than any of the other topics combined
 4. Text Editing Module
    - Being able to edit these documents live with someone else
    - Annotation ability too
